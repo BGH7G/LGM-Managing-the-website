@@ -1,0 +1,244 @@
+<script setup>
+import { ref, onMounted, computed } from 'vue';
+import { useUserStore } from '@/stores/auth';
+
+// Get user store
+const userStore = useUserStore();
+const userInfo = computed(() => {
+  // Check if userInfo is a string (from localStorage) and parse it if needed
+  if (typeof userStore.userInfo === 'string') {
+    try {
+      return JSON.parse(userStore.userInfo);
+    } catch (e) {
+      console.error('Error parsing userInfo:', e);
+      return {};
+    }
+  }
+  return userStore.userInfo || {};
+});
+
+// Avatar placeholder if user doesn't have an avatar
+const getAvatarUrl = computed(() => {
+  if (userInfo.value && userInfo.value.avatar) {
+    // If avatar is a full URL
+    if (userInfo.value.avatar.startsWith('http://') || userInfo.value.avatar.startsWith('https://')) {
+      return userInfo.value.avatar;
+    }
+    // If avatar is a relative path
+    return `${window.location.origin}/${userInfo.value.avatar.replace(/^public\//, '')}`;
+  }
+  return 'https://cdn.vuetifyjs.com/images/john.jpg'; // Default avatar
+});
+
+// Initialize user data if needed
+onMounted(async () => {
+  if (userStore.isAuthenticated && !userStore.userInfo) {
+    await userStore.initialize();
+  }
+});
+</script>
+
+<template>
+  <v-container class="profile-container">
+    <v-row>
+      <v-col cols="12" class="d-flex justify-space-between align-center mb-6">
+        <h1 class="text-h4 gradient-text">个人资料</h1>
+      </v-col>
+    </v-row>
+
+    <v-row v-if="userStore.isAuthenticated" justify="center">
+      <v-col cols="12" md="8" lg="6">
+        <v-card class="profile-card elevation-10" rounded="xl">
+          <!-- Avatar Section at the top -->
+          <div class="profile-avatar-section text-center">
+            <div class="avatar-container">
+              <v-avatar size="180" class="profile-avatar">
+                <v-img :src="getAvatarUrl" alt="User Avatar"></v-img>
+              </v-avatar>
+              <div class="avatar-overlay">
+                <v-icon icon="mdi-camera" size="large"></v-icon>
+              </div>
+            </div>
+            <h2 class="text-h4 mt-4 font-weight-bold">{{ userInfo.username || userStore.username }}</h2>
+            <v-chip class="mt-2 mb-4 user-role-chip" color="primary" variant="elevated">
+              <v-icon start icon="mdi-shield-account" class="mr-1"></v-icon>
+              {{ userInfo.role || '用户' }}
+            </v-chip>
+          </div>
+          
+          <v-divider></v-divider>
+          
+          <!-- User Information Section below -->
+          <v-card-text class="profile-info-section">
+            <h3 class="text-h5 mb-4 d-flex align-center">
+              <v-icon icon="mdi-account-details" color="primary" class="mr-2"></v-icon>
+              个人信息
+            </h3>
+            
+            <v-row dense>
+              <v-col cols="12" sm="6">
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon icon="mdi-account" color="primary" class="mr-2"></v-icon>
+                    用户名
+                  </div>
+                  <div class="info-value">{{ userInfo.username || '未设置' }}</div>
+                </div>
+              </v-col>
+              
+              <v-col cols="12" sm="6">
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon icon="mdi-email" color="primary" class="mr-2"></v-icon>
+                    邮箱
+                  </div>
+                  <div class="info-value">{{ userInfo.email || '未设置' }}</div>
+                </div>
+              </v-col>
+              
+              <v-col cols="12" sm="6">
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon icon="mdi-phone" color="primary" class="mr-2"></v-icon>
+                    电话
+                  </div>
+                  <div class="info-value">{{ userInfo.phone || '未设置' }}</div>
+                </div>
+              </v-col>
+              
+              <v-col cols="12" sm="6" v-if="userInfo.createdAt">
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon icon="mdi-calendar" color="primary" class="mr-2"></v-icon>
+                    注册时间
+                  </div>
+                  <div class="info-value">{{ new Date(userInfo.createdAt).toLocaleString() }}</div>
+                </div>
+              </v-col>
+              
+              <v-col cols="12" sm="6" v-if="userInfo.lastLogin">
+                <div class="info-item">
+                  <div class="info-label">
+                    <v-icon icon="mdi-login" color="primary" class="mr-2"></v-icon>
+                    上次登录
+                  </div>
+                  <div class="info-value">{{ new Date(userInfo.lastLogin).toLocaleString() }}</div>
+                </div>
+              </v-col>
+            </v-row>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row v-else>
+      <v-col cols="12" class="text-center">
+        <v-alert type="info" title="未登录" text="请先登录以查看个人资料" variant="tonal" border="start" class="login-alert"></v-alert>
+      </v-col>
+    </v-row>
+  </v-container>
+</template>
+
+<style scoped>
+.profile-container {
+  padding-top: 2rem;
+  padding-bottom: 2rem;
+}
+
+.gradient-text {
+  background: linear-gradient(45deg, var(--v-theme-primary), var(--v-theme-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: bold;
+}
+
+.profile-card {
+  transition: transform 0.3s, box-shadow 0.3s;
+  overflow: hidden;
+  border: 1px solid rgba(var(--v-theme-primary), 0.1);
+}
+
+.profile-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.profile-avatar-section {
+  position: relative;
+  padding: 2.5rem 1rem;
+  background: linear-gradient(to bottom, rgba(var(--v-theme-primary), 0.05), rgba(var(--v-theme-surface), 1));
+}
+
+.profile-info-section {
+  padding: 2rem;
+  background-color: rgba(var(--v-theme-surface), 1);
+}
+
+.avatar-container {
+  position: relative;
+  display: inline-block;
+  margin: 0 auto;
+}
+
+.profile-avatar {
+  border: 5px solid rgba(var(--v-theme-primary), 0.5);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.avatar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s;
+  cursor: pointer;
+}
+
+.avatar-overlay:hover {
+  opacity: 1;
+}
+
+.user-role-chip {
+  font-weight: 500;
+}
+
+.info-item {
+  margin-bottom: 1.5rem;
+}
+
+.info-label {
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  color: rgba(var(--v-theme-on-surface), 0.7);
+  margin-bottom: 0.5rem;
+}
+
+.info-value {
+  font-size: 1.1rem;
+  padding-left: 1.8rem;
+}
+
+.login-alert {
+  max-width: 500px;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+
+@media (max-width: 960px) {
+  .profile-avatar-section {
+    padding-bottom: 1.5rem;
+  }
+  
+  .profile-info-section {
+    padding-top: 1.5rem;
+  }
+}
+</style>

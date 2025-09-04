@@ -1,0 +1,456 @@
+<script setup>
+import {ref, onMounted, computed, watch} from 'vue';
+import {getInfo} from '@/api/data.api';
+import {useRouter} from 'vue-router';
+
+// Get router instance
+const router = useRouter();
+
+// Navigate to sheep detail page
+const navigateToSheepDetail = (sheepId) => {
+  router.push({name: 'huSheep_detail', params: {id: sheepId}});
+};
+
+// Date formatting function
+const formatDate = (dateString) => {
+  if (!dateString) return '未知';
+  const date = new Date(dateString);
+  return date.toLocaleDateString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
+
+// Data
+const loading = ref(false);
+const sheepData = ref([]);
+const pagination = ref({
+  totalItems: 0,
+  totalPages: 0,
+  currentPage: 1,
+  pageSize: 10,
+  hasNextPage: false,
+  hasPrevPage: false
+});
+
+// Sort options
+const sortBy = ref('id');
+const sortOrder = ref('ASC');
+
+// Search and filter
+const search = ref('');
+const selectedLocation = ref(null);
+const selectedGender = ref(null);
+const selectedPregnant = ref(null);
+const dateRange = ref({
+  fromDate: null,
+  toDate: null
+});
+const menu1 = ref(false);
+const menu2 = ref(false);
+
+// Locations for filter dropdown
+const locations = computed(() => {
+  const uniqueLocations = new Map();
+  sheepData.value.forEach(sheep => {
+    if (sheep.Location) {
+      uniqueLocations.set(sheep.Location.id, sheep.Location);
+    }
+  });
+  return Array.from(uniqueLocations.values());
+});
+
+// Headers for data table
+const headers = [
+  {title: '羊编号', key: 'sheep_number', sortable: true},
+  {title: '出生日期', key: 'birth_date', sortable: true},
+  {title: '性别', key: 'gender', sortable: true},
+  {title: '怀孕状态', key: 'pregnant', sortable: true},
+  {title: '备注', key: 'notes', sortable: false},
+  {title: '创建时间', key: 'createdAt', sortable: true},
+  {title: '更新时间', key: 'updatedAt', sortable: true},
+  {title: '牧场', key: 'location', sortable: true},
+  {title: '地址', key: 'address', sortable: true},
+  {title: '地区', key: 'region', sortable: true},
+  {title: '气候信息', key: 'climate_info', sortable: false},
+];
+
+// Options for data table
+const options = ref({
+  page: 1,
+  itemsPerPage: 10,
+  sortBy: [{key: 'id', order: 'asc'}]
+});
+
+// Watch for options changes (pagination, sorting)
+watch(options, (newOptions) => {
+
+  // 更新分页参数
+  pagination.value.currentPage = newOptions.page;
+  pagination.value.pageSize = newOptions.itemsPerPage;
+
+  // 更新排序
+  if (newOptions.sortBy && newOptions.sortBy.length > 0) {
+    sortBy.value = newOptions.sortBy[0].key;
+    sortOrder.value = newOptions.sortBy[0].order.toUpperCase();
+  } else {
+    sortBy.value = 'id';
+    sortOrder.value = 'ASC';
+  }
+
+  // 当选项变更时获取数据
+  fetchData();
+}, {deep: true});
+
+// 直接监听分页变化
+watch(() => pagination.value.currentPage, (newPage) => {
+  if (!loading.value) {
+    fetchData();
+  }
+});
+
+// Fetch data with current filters and pagination
+const fetchData = async () => {
+  loading.value = true;
+  try {
+    const params = {
+      page: pagination.value.currentPage,
+      pageSize: pagination.value.pageSize,
+      sortBy: sortBy.value,
+      sortOrder: sortOrder.value,
+      gender: selectedGender.value,
+      pregnant: selectedPregnant.value,
+      fromDate: dateRange.value.fromDate,
+      toDate: dateRange.value.toDate,
+      sheepNumber: search.value || undefined
+    };
+
+    const response = await getInfo(params);
+    if (response.data.success) {
+      sheepData.value = response.data.data || [];
+
+      // Update pagination from response
+      if (response.data.pagination) {
+        pagination.value = response.data.pagination;
+      } else {
+        pagination.value.totalItems = response.data.total || 0;
+        pagination.value.totalPages = Math.ceil(pagination.value.totalItems / pagination.value.pageSize);
+        pagination.value.hasNextPage = pagination.value.currentPage < pagination.value.totalPages;
+        pagination.value.hasPrevPage = pagination.value.currentPage > 1;
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching sheep data:', error);
+  } finally {
+    loading.value = false;
+  }
+};
+
+// Format data for display
+const formattedData = computed(() => {
+  return sheepData.value.map(sheep => ({
+    ...sheep,
+    birth_date: formatDate(sheep.birth_date),
+    createdAt: formatDate(sheep.createdAt),
+    updatedAt: formatDate(sheep.updatedAt),
+    location: sheep.Location?.farm_name || '未知',
+    address: sheep.Location?.address || '未知',
+    region: sheep.Location?.region || '未知',
+    climate_info: sheep.Location?.climate_info || '未知',
+    gender_display: sheep.gender === 'male' ? '公' : '母',
+    pregnant_display: sheep.pregnant ? '是' : '否',
+  }));
+});
+
+// Apply filters and fetch data
+const applyFilters = () => {
+  pagination.value.currentPage = 1; // Reset to first page when filters change
+  fetchData();
+};
+
+// Reset filters
+const resetFilters = () => {
+  search.value = '';
+  selectedLocation.value = null;
+  selectedGender.value = null;
+  selectedPregnant.value = null;
+  dateRange.value = {fromDate: null, toDate: null};
+  pagination.value.currentPage = 1;
+  fetchData();
+};
+
+// 处理每页数量变化
+const onPageSizeChange = (newSize) => {
+  pagination.value.pageSize = newSize;
+  pagination.value.currentPage = 1; // 重置为第一页
+  fetchData();
+};
+
+// Initialize
+onMounted(() => {
+  fetchData();
+});
+</script>
+
+<template>
+  <v-container fluid>
+    <v-card>
+      <v-card-title class="d-flex align-center">
+        <h2 class="text-h5 font-weight-bold">羊只个体数据</h2>
+        <v-spacer></v-spacer>
+        <v-btn
+            color="primary"
+            :loading="loading"
+            @click="fetchData"
+        >
+          <v-icon start>mdi-refresh</v-icon>
+          刷新数据
+        </v-btn>
+      </v-card-title>
+
+      <v-card-text>
+        <!-- Filters -->
+        <v-row>
+          <v-col cols="12" sm="6" md="3">
+            <v-text-field
+                v-model="search"
+                label="羊编号搜索"
+                density="compact"
+                hide-details
+                variant="outlined"
+                clearable
+                @keyup.enter="applyFilters"
+            >
+              <template v-slot:prepend-inner>
+                <v-icon>mdi-magnify</v-icon>
+              </template>
+            </v-text-field>
+          </v-col>
+
+          <v-col cols="12" sm="6" md="2">
+            <v-select
+                v-model="selectedGender"
+                :items="[
+                { title: '公', value: 'male' },
+                { title: '母', value: 'female' }
+              ]"
+                item-title="title"
+                item-value="value"
+                label="性别"
+                density="compact"
+                hide-details
+                variant="outlined"
+                clearable
+                @update:model-value="applyFilters"
+            ></v-select>
+          </v-col>
+
+          <v-col cols="12" sm="6" md="2">
+            <v-select
+                v-model="selectedPregnant"
+                :items="[
+                { title: '是', value: true },
+                { title: '否', value: false }
+              ]"
+                item-title="title"
+                item-value="value"
+                label="怀孕状态"
+                density="compact"
+                hide-details
+                variant="outlined"
+                clearable
+                @update:model-value="applyFilters"
+            ></v-select>
+          </v-col>
+
+          <v-col cols="12" sm="6" md="2">
+            <v-menu
+                v-model="menu1"
+                :close-on-content-click="false"
+                max-width="290px"
+                min-width="auto"
+            >
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                    v-model="dateRange.fromDate"
+                    label="开始日期"
+                    persistent-hint
+                    v-bind="props"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    readonly
+                    clearable
+                    @click:clear="dateRange.fromDate = null; applyFilters()"
+                >
+                  <template v-slot:prepend-inner>
+                    <v-icon>mdi-calendar</v-icon>
+                  </template>
+                </v-text-field>
+              </template>
+              <v-date-picker
+                  v-model="dateRange.fromDate"
+                  @update:model-value="menu1 = false; applyFilters()"
+              ></v-date-picker>
+            </v-menu>
+          </v-col>
+
+          <v-col cols="12" sm="6" md="2">
+            <v-menu
+                v-model="menu2"
+                :close-on-content-click="false"
+                max-width="290px"
+                min-width="auto"
+            >
+              <template v-slot:activator="{ props }">
+                <v-text-field
+                    v-model="dateRange.toDate"
+                    label="结束日期"
+                    persistent-hint
+                    v-bind="props"
+                    density="compact"
+                    variant="outlined"
+                    hide-details
+                    readonly
+                    clearable
+                    @click:clear="dateRange.toDate = null; applyFilters()"
+                >
+                  <template v-slot:prepend-inner>
+                    <v-icon>mdi-calendar</v-icon>
+                  </template>
+                </v-text-field>
+              </template>
+              <v-date-picker
+                  v-model="dateRange.toDate"
+                  @update:model-value="menu2 = false; applyFilters()"
+              ></v-date-picker>
+            </v-menu>
+          </v-col>
+
+          <v-col cols="12" sm="6" md="1">
+            <v-btn
+                color="secondary"
+                variant="outlined"
+                block
+                @click="resetFilters"
+                density="compact"
+            >
+              重置
+            </v-btn>
+          </v-col>
+        </v-row>
+      </v-card-text>
+
+      <!-- Data Table -->
+      <v-data-table
+          :headers="headers"
+          :items="formattedData"
+          :loading="loading"
+          :items-per-page="pagination.pageSize"
+          :server-items-length="pagination.totalItems"
+          :page="pagination.currentPage"
+          hide-default-footer
+      >
+        <!-- Sheep number column with click navigation -->
+        <template v-slot:[`item.sheep_number`]="{ item }">
+          <a
+              href="#"
+              @click.prevent="navigateToSheepDetail(item.raw.id)"
+              class="sheep-link"
+          >
+            {{ item.raw.sheep_number }}
+          </a>
+        </template>
+
+        <!-- Gender column -->
+        <template v-slot:[`item.gender`]="{ item }">
+          <v-chip
+              :color="item.raw.gender === 'male' ? 'blue' : 'pink'"
+              size="small"
+              text-color="white"
+          >
+            {{ item.raw.gender === 'male' ? '公' : '母' }}
+          </v-chip>
+        </template>
+
+        <!-- Pregnant column -->
+        <template v-slot:[`item.pregnant`]="{ item }">
+          <v-chip
+              :color="item.raw.pregnant ? 'green' : 'grey'"
+              size="small"
+              text-color="white"
+          >
+            {{ item.raw.pregnant ? '是' : '否' }}
+          </v-chip>
+        </template>
+
+        <!-- No data template -->
+        <template v-slot:no-data>
+          <div class="d-flex align-center justify-center pa-4">
+            <v-icon icon="mdi-alert-circle-outline" class="mr-2"></v-icon>
+            暂无数据
+          </div>
+        </template>
+      </v-data-table>
+
+      <!-- 独立分页控件 -->
+      <div class="d-flex align-center justify-space-between px-4 py-2">
+        <div>
+          总共 {{ pagination.totalItems }} 条记录
+        </div>
+        <v-pagination
+            v-model="pagination.currentPage"
+            :length="Math.ceil(pagination.totalItems / pagination.pageSize)"
+            :total-visible="7"
+            rounded
+        ></v-pagination>
+        <div>
+          每页
+          <v-select
+              v-model="pagination.pageSize"
+              :items="[5, 10, 20, 50]"
+              variant="plain"
+              density="compact"
+              class="items-per-page-select"
+              hide-details
+              @update:model-value="onPageSizeChange"
+          ></v-select>
+          条
+        </div>
+      </div>
+    </v-card>
+  </v-container>
+</template>
+
+<style scoped>
+.v-data-table {
+  margin-top: 16px;
+}
+
+.v-card-title {
+  padding-bottom: 0;
+}
+
+.sheep-link {
+  color: #1976d2;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.sheep-link:hover {
+  text-decoration: underline;
+}
+
+.items-per-page-select {
+  width: 70px;
+  display: inline-block;
+  margin: 0 4px;
+}
+
+.v-pagination {
+  justify-content: center;
+}
+</style>

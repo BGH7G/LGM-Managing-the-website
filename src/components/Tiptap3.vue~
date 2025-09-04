@@ -1,0 +1,1285 @@
+<template>
+  <div class="tiptap">
+    <div class="tiptap-tools">
+      <div class="text-style-controls">
+        <v-tooltip text="标题 1" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isH1Active }]"
+                variant="text"
+                color="primary"
+                @click="clickH1"
+            >
+              <v-icon icon="mdi-format-header-1"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="标题 2" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isH2Active }]"
+                variant="text"
+                color="primary"
+                @click="clickH2"
+            >
+              <v-icon icon="mdi-format-header-2"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="标题 3" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isH3Active }]"
+                variant="text"
+                color="primary"
+                @click="clickH3"
+            >
+              <v-icon icon="mdi-format-header-3"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="粗体" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isBold }]"
+                @click="clickBold"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-bold"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="斜体" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isItalic }]"
+                @click="clickItalic"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-italic"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="删除线" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isSetStrike }]"
+                @click="setStrike"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-strikethrough"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="下划线" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isUnderline }]"
+                @click="setUnderline"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-underline"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+
+        <v-tooltip text="左对齐" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="setLeft"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-align-left"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="右对齐" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="setRight"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-align-right"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="居中对齐" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="setCenter"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-align-center"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="有序列表" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isOrderedList }]"
+                @click="setOrderedList"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-order-numeric-ascending"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="无序列表" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isListItem }]"
+                @click="setListItem"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-order-bool-descending"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="水平线" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isHorizontal }]"
+                @click="setHorizontal"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-align-middle"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="引用块" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isBlockquote }]"
+                @click="setBlockquote"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-quote-open"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="代码块" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isCodeBlock }]"
+                @click="setCodeBlock"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-code-array"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="添加链接" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isLink }]"
+                @click="showDialog"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-link-box"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="上标" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isSuper }]"
+                @click="setSuper"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-superscript"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="下标" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isSub }]"
+                @click="setSub"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-subscript"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="任务列表" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isTask }]"
+                @click="setTask"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-format-list-bulleted-square"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="插入表格" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn', { active: isTable }]"
+                @click="insertTable"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="删除表格" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="deleteTable"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-remove"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="在后方添加列" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="columnAfter"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-column-plus-after"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="在前方添加列" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="columnBefore"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-column-plus-before"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="在下方添加行" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="rowAfter"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-row-plus-after"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="在上方添加行" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="rowBefore"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-row-plus-before"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="删除列" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="deleteColumn"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-column-remove"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="删除行" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="deleteRow"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-row-remove"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-tooltip text="合并或拆分单元格" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                :class="['editor-btn']"
+                @click="mergeOrSplit"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-table-split-cell"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-menu
+            v-model="colorPickerShow"
+            :close-on-content-click="false"
+        >
+          <template v-slot:activator="{ props: menuProps }">
+            <v-tooltip text="文字颜色" location="bottom">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <v-btn
+                    v-bind="{ ...menuProps, ...tooltipProps }"
+                    :class="['editor-btn', { active: isColorActive }]"
+                    variant="text"
+                    color="primary"
+                >
+                  <v-icon icon="mdi-palette"></v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
+          </template>
+          <v-card>
+            <v-card-text>
+              <v-color-picker
+                  v-model="color"
+                  @update:model-value="updateColor"
+                  hide-inputs
+                  hide-canvas
+                  show-swatches
+              ></v-color-picker>
+            </v-card-text>
+          </v-card>
+        </v-menu>
+
+        <v-menu
+            v-model="highlightShow"
+            :close-on-content-click="false"
+        >
+          <template v-slot:activator="{ props: menuProps }">
+            <v-tooltip text="高亮颜色" location="bottom">
+              <template v-slot:activator="{ props: tooltipProps }">
+                <v-btn
+                    v-bind="{ ...menuProps, ...tooltipProps }"
+                    :class="['editor-btn']"
+                    variant="text"
+                    color="primary"
+                >
+                  <v-icon icon="mdi-format-color-highlight"></v-icon>
+                </v-btn>
+              </template>
+            </v-tooltip>
+          </template>
+          <v-card>
+            <v-card-text>
+              <v-color-picker
+                  v-model="highlightColor"
+                  @update:model-value="setHighlight"
+                  hide-inputs
+                  hide-canvas
+                  show-swatches
+              ></v-color-picker>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer></v-spacer>
+              <v-btn
+                  color="primary"
+                  variant="text"
+                  @click="cleanHighLight"
+              >
+                清除高亮
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-menu>
+
+        <v-tooltip text="上传图片" location="bottom">
+          <template v-slot:activator="{ props }">
+            <v-btn
+                v-bind="props"
+                class="editor-btn"
+                @click="uploadImage"
+                variant="text"
+                color="primary"
+            >
+              <v-icon icon="mdi-image"></v-icon>
+            </v-btn>
+          </template>
+        </v-tooltip>
+        <v-file-input
+            ref="fileInput"
+            style="display: none"
+            accept="image/*"
+            @update:modelValue="setImage"></v-file-input>
+      </div>
+    </div>
+    <editor-content :editor="editor"/>
+  </div>
+</template>
+
+<script setup>
+const MAX_AVATAR_SIZE = 10000000
+
+import {computed, onBeforeUnmount, ref} from 'vue'
+import axios from "axios";
+import {useEditor, EditorContent, BubbleMenu} from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Strike from '@tiptap/extension-strike'
+import Color from "@tiptap/extension-color";
+import Highlight from '@tiptap/extension-highlight'
+import TextStyle from '@tiptap/extension-text-style'
+import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
+import Subscript from '@tiptap/extension-subscript'
+import Superscript from '@tiptap/extension-superscript'
+import TaskItem from '@tiptap/extension-task-item'
+import TaskList from '@tiptap/extension-task-list'
+import Mention from '@tiptap/extension-mention'
+import Table from '@tiptap/extension-table'
+import TableCell from '@tiptap/extension-table-cell'
+import TableHeader from '@tiptap/extension-table-header'
+import TableRow from '@tiptap/extension-table-row'
+import Underline from '@tiptap/extension-underline'
+import TextAlign from '@tiptap/extension-text-align'
+import {Extension} from '@tiptap/core'
+import {Plugin, PluginKey} from '@tiptap/pm/state'
+import {NodeSelection} from '@tiptap/pm/state'
+
+
+const colorPickerShow = ref(false)
+const color = ref('#000000')
+const highlightColor = ref('#000000')
+const highlightShow = ref(false)
+const fileInput = ref()
+const dialogVisible = ref(false)
+const linkUrl = ref('')
+
+const rules = {
+  url: (value) => {
+    if (!value) return true
+    const pattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/
+    return pattern.test(value) || '请输入有效的URL地址'
+  }
+}
+const ImageUpload = Extension.create({
+  name: 'imageUpload',
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('imageUpload'),
+        props: {
+          handlePaste: (view, event) => {
+            const items = Array.from(event.clipboardData?.items || []);
+            const imageItems = items.filter(item => item.type.indexOf('image') !== -1);
+            // 只有当剪贴板中仅包含图片时处理，否则让默认行为继续
+            if (imageItems.length > 0 && imageItems.length === items.length) {
+              event.preventDefault();
+              try {
+                for (const image of imageItems) {
+                  const file = image.getAsFile();
+                  if (!file) continue;
+
+                  const localUrl = URL.createObjectURL(file);
+                  const { schema } = view.state;
+                  const node = schema.nodes.image.create({ src: localUrl });
+                  const transaction = view.state.tr.replaceSelectionWith(node);
+                  view.dispatch(transaction);
+
+                  URL.revokeObjectURL(localUrl);
+                }
+              } catch (error) {
+                console.error('Image paste failed:', error);
+              }
+              return true;
+            }
+            // 如果粘贴内容中包含文本或其他数据，返回 false，允许默认粘贴行为
+            return false;
+          },
+        }
+      })
+    ]
+  }
+})
+const ImageResize = Extension.create({
+  name: 'imageResize',
+
+  addProseMirrorPlugins() {
+    let dragStart = null
+    let dragging = false
+
+    return [
+      new Plugin({
+        key: new PluginKey('imageResize'),
+        props: {
+          handleDOMEvents: {
+            mousedown: (view, event) => {
+              const target = event.target
+              const isResizeHandle = target.classList.contains('resize-handle')
+
+              if (!isResizeHandle) return false
+
+              event.preventDefault()
+              const imageElement = target.closest('.image-wrapper')
+              if (!imageElement) return false
+
+              const imagePos = view.posAtDOM(imageElement, 0)
+              const tr = view.state.tr.setSelection(NodeSelection.create(view.state.doc, imagePos))
+              view.dispatch(tr)
+
+              dragStart = {
+                x: event.clientX,
+                y: event.clientY,
+                width: imageElement.querySelector('img').offsetWidth,
+                height: imageElement.querySelector('img').offsetHeight
+              }
+              dragging = true
+              return true
+            },
+
+            mousemove: (view, event) => {
+              if (!dragging || !dragStart) return false
+
+              const delta = {
+                x: event.clientX - dragStart.x,
+                y: event.clientY - dragStart.y
+              }
+
+              const selectedNode = view.state.selection.$anchor.nodeAfter
+              if (!selectedNode) return false
+
+              const newWidth = dragStart.width + delta.x
+              const newHeight = dragStart.height + delta.y
+
+              const transaction = view.state.tr.setNodeMarkup(
+                  view.state.selection.from,
+                  null,
+                  {
+                    ...selectedNode.attrs,
+                    width: newWidth,
+                    height: newHeight
+                  }
+              )
+
+              view.dispatch(transaction)
+              return true
+            },
+
+            mouseup: () => {
+              dragStart = null
+              dragging = false
+              return false
+            }
+          }
+        }
+      })
+    ]
+  }
+})
+const CustomImage = Image.extend({
+  name: 'image',
+  group: 'block',
+  draggable: true,
+  addAttributes() {
+    return {
+      ...Image.config.addAttributes(),
+      textAlign: {
+        default: null,
+        parseHTML: element => element.style.textAlign || null,
+        renderHTML: attributes => {
+          return attributes.textAlign
+              ? { style: `text-align: ${attributes.textAlign}` }
+              : {}
+        },
+      },
+      width: {
+        default: null,
+        renderHTML: attributes => ({ width: attributes.width }),
+      },
+      height: {
+        default: null,
+        renderHTML: attributes => ({ height: attributes.height }),
+      },
+    }
+  },
+  renderHTML({ HTMLAttributes }) {
+    return [
+      'div',
+      {
+        class: 'image-wrapper',
+        // 将 textAlign 属性内联设置到外层 div 上
+        style: HTMLAttributes.textAlign ? `text-align: ${HTMLAttributes.textAlign}` : '',
+      },
+      ['img', HTMLAttributes],
+      ['div', { class: 'resize-handle bottom-right' }]
+    ]
+  },
+})
+const TabHandler = Extension.create({
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey('tabHandler'),
+        props: {
+          handleKeyDown: (view, event) => {
+            if (event.key === 'Tab' && !event.shiftKey) {
+              // 阻止默认行为
+              event.preventDefault()
+
+              // 插入两个全角空格（中文排版常用）
+              const transaction = view.state.tr
+                  .insertText('　　')
+                  .scrollIntoView()
+              view.dispatch(transaction)
+              return true
+            }
+
+            // 添加 Shift+Tab 反向缩进
+            if (event.key === 'Tab' && event.shiftKey) {
+              event.preventDefault()
+              // 这里可以添加反向缩进逻辑
+              return true
+            }
+            return false
+          }
+        }
+      })
+    ]
+  }
+})
+const insertTable = () => {
+  editor.value.chain().focus().insertTable({
+    rows: 3,
+    cols: 3,
+    withHeaderRow: true
+  }).run()
+}
+
+const editor = useEditor({
+  extensions: [
+    Strike,
+    Underline,
+    TabHandler,
+    TextAlign.configure({
+      types: ['heading', 'paragraph','image'],
+      alignments: ['left', 'center', 'right'],
+      defaultAlignment: 'left'
+    }),
+    CustomImage.configure({
+      HTMLAttributes: {
+        class: 'my-upload-image'
+      }
+    }),
+    Highlight.configure({
+      multicolor: true
+    }),
+    Color.configure({
+      types: ['textStyle']
+    }),
+    TextStyle,
+    StarterKit.configure({
+          orderedList: {
+            itemTypeName: 'listItem',
+            keepMarks: true,
+            keepAttributes: true
+          },
+          heading: {
+            levels: [1, 2, 3],
+            HTMLAttributes: {
+              class: "my-title"
+            },
+          },
+          codeBlock: {
+            exitOnTripleEnter: true,
+            exitOnArrowDown: true
+          },
+        },
+    ),
+    ImageResize,
+    ImageUpload,
+    Link.configure({
+      defaultProtocol: 'https',
+      openOnClick: true,
+    }),
+    Superscript,
+    Subscript,
+    TaskItem.configure({
+      nested: true,
+    }),
+    TaskList,
+    Mention,
+    Table.configure({
+      resizable: true,
+      HTMLAttributes: {
+        class: 'my-custom-table',
+      }
+    }),
+    TableRow,
+    TableCell,
+    TableHeader.configure({
+      HTMLAttributes: {
+        class: 'bg-grey-lightest',
+      },
+    }),
+  ],
+  autofocus: true,
+})
+
+const isH1Active = computed(() => {
+  return editor.value?.isActive('Heading', {level: 1}) ?? false
+})
+const isH2Active = computed(() => {
+  return editor.value?.isActive('Heading', {level: 2}) ?? false
+})
+const isH3Active = computed(() => {
+  return editor.value?.isActive('Heading', {level: 3}) ?? false
+})
+const isBold = computed(() => {
+  return editor.value?.isActive('Bold') ?? false
+})
+const isItalic = computed(() => {
+  return editor.value?.isActive('Italic') ?? false
+})
+const isColorActive = computed(() => {
+  return editor.value?.isActive('TextStyle') ?? false
+})
+const isSetStrike = computed(() => {
+  return editor.value?.isActive('Strike') ?? false
+})
+const isOrderedList = computed(() => {
+  return editor.value?.isActive('OrderedList') ?? false
+})
+const isListItem = computed(() => {
+  return editor.value?.isActive('ListItem') ?? false
+})
+const isHorizontal = computed(() => {
+  return editor.value?.isActive('HorizontalRule') ?? false
+})
+const isBlockquote = computed(() => {
+  return editor.value?.isActive('Blockquote') ?? false
+})
+const isCodeBlock = computed(() => {
+  return editor.value?.isActive('CodeBlock') ?? false
+})
+const isLink = computed(() => {
+  return editor.value?.isActive('Link') ?? false
+})
+const isSuper = computed(() => {
+  return editor.value?.isActive('Superscript') ?? false
+})
+const isSub = computed(() => {
+  return editor.value?.isActive('Subscript') ?? false
+})
+const isTask = computed(() => {
+  return editor.value?.isActive('TaskList') ?? false
+})
+const isTable = computed(() => {
+  return editor.value?.isActive('Table') ?? false
+})
+const isUnderline = computed(() => {
+  return editor.value?.isActive('Underline') ?? false
+})
+
+const clickH1 = () => {
+  editor.value?.chain().focus().toggleHeading({level: 1}).run()
+}
+const clickH2 = () => {
+  editor.value?.chain().focus().toggleHeading({level: 2}).run()
+}
+const clickH3 = () => {
+  editor.value?.chain().focus().toggleHeading({level: 3}).run()
+}
+const clickBold = () => {
+  editor.value?.chain().focus().toggleBold().run()
+}
+const clickItalic = () => {
+  editor.value?.chain().focus().toggleItalic().run()
+}
+const updateColor = (color) => {
+  editor.value?.chain().focus().setColor(color).run()
+}
+const setHighlight = (color) => {
+  editor.value?.chain().focus().toggleHighlight({color}).run()
+}
+const cleanHighLight = () => {
+  editor.value?.chain().focus().unsetHighlight().run()
+}
+const setStrike = () => {
+  editor.value?.chain().focus().toggleStrike().run()
+}
+const setOrderedList = () => {
+  editor.value?.chain().focus().toggleOrderedList().run()
+}
+const setListItem = () => {
+  editor.value?.chain().focus().toggleBulletList().run()
+}
+const setHorizontal = () => {
+  editor.value?.chain().focus().setHorizontalRule().run()
+}
+const setBlockquote = () => {
+  editor.value?.chain().focus().toggleBlockquote().run()
+}
+const setCodeBlock = () => {
+  editor.value?.chain().focus().toggleCodeBlock().run()
+}
+const setSuper = () => {
+  editor.value?.chain().focus().toggleSuperscript().run()
+}
+const setSub = () => {
+  editor.value?.chain().focus().toggleSubscript().run()
+}
+const setTask = () => {
+  editor.value?.chain().focus().toggleTaskList().run()
+}
+const deleteTable = () => {
+  editor.value?.chain().focus().deleteTable().run()
+}
+const columnAfter = () => {
+  editor.value?.chain().focus().addColumnAfter().run()
+}
+const columnBefore = () => {
+  editor.value?.chain().focus().addColumnBefore().run()
+}
+const rowAfter = () => {
+  editor.value?.chain().focus().addRowAfter().run()
+}
+const rowBefore = () => {
+  editor.value?.chain().focus().addRowBefore().run()
+}
+const deleteRow = () => {
+  editor.value?.chain().focus().deleteRow().run()
+}
+const deleteColumn = () => {
+  editor.value?.chain().focus().deleteColumn().run()
+}
+const mergeOrSplit = () => {
+  editor.value?.chain().focus().mergeOrSplit().run()
+}
+const setUnderline = () => {
+  editor.value?.chain().focus().toggleUnderline().run()
+}
+const setRight = () => {
+  editor.value?.chain().focus().setTextAlign('right').run()
+}
+const setLeft = () => {
+  editor.value?.chain().focus().setTextAlign('left').run()
+}
+const setCenter = () => {
+  editor.value?.chain().focus().setTextAlign('center').run()
+}
+
+const uploadImage = () => {
+  fileInput.value.click()
+}
+const setImage = (file) => {
+  console.log(file)
+  if (file.size > MAX_AVATAR_SIZE) {
+    console.log("图片太大了")
+  } else {
+    const image = URL.createObjectURL(file)
+    editor.value?.chain().focus().setImage({src: image}).run()
+  }
+}
+const showDialog = () => {
+  linkUrl.value = editor.value?.getAttributes('link').href || ''
+  dialogVisible.value = true
+}
+const confirmLink = () => {
+  if (!linkUrl.value) {
+    editor.value?.chain().focus().unsetLink().run()
+  } else {
+    editor.value?.chain().focus().setLink({
+      href: linkUrl.value,
+      target: '_blank',
+      rel: 'noopener noreferrer'
+    }).run()
+  }
+  dialogVisible.value = false
+  linkUrl.value = ''
+}
+
+onBeforeUnmount(() => {
+  editor.value?.destroy()
+})
+</script>
+
+<style lang="scss">
+/* 定义全局变量 */
+.tiptap {
+  border-radius: 4px;
+  padding: 1rem;
+
+  /* CSS 变量 */
+  --gray-2: #c6c6c6;
+  --gray-3: #b4b4b4;
+  --black: #000000;
+  --white: #ffffff;
+  --primary: #3f51b5;
+  --primary-light: #757de8;
+  --primary-dark: #002984;
+  --secondary: #ff4081;
+  --secondary-light: #ff79b0;
+  --secondary-dark: #c60055;
+  --active-bg: #e0e0e0;
+  --border-color: #e0e0e0;
+  --button-radius: 8px;
+  --button-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --button-hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.12);
+  --button-active-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  --purple: #8a2be2;
+  --purple-light: #9d4edd;
+  --purple-contrast: #a663f5;
+  --button-disabled-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  --button-disabled-opacity: 0.5;
+
+  /* 样式调整 */
+  mark {
+    background-color: #FAF594;
+    border-radius: 0.4rem;
+    box-decoration-break: clone;
+    padding: 0.1rem 0.3rem;
+  }
+
+  pre {
+    background: var(--black);
+    border-radius: 0.5rem;
+    color: var(--white);
+    font-family: 'JetBrainsMono', monospace;
+    margin: 1.5rem 0;
+    padding: 0.75rem 1rem;
+
+    code {
+      background: none;
+      color: inherit;
+      font-size: 0.8rem;
+      padding: 0;
+    }
+  }
+
+  ul,
+  ol {
+    padding: 0 1rem;
+    margin: 1.25rem 1rem 1.25rem 0.4rem;
+
+    li p {
+      margin-top: 0.25em;
+      margin-bottom: 0.25em;
+    }
+  }
+
+  ul[data-type="taskList"] {
+    list-style: none;
+    margin-left: 0;
+    padding: 0;
+
+    li {
+      align-items: flex-start;
+      display: flex;
+
+      > label {
+        flex: 0 0 auto;
+        margin-right: 0.5rem;
+        margin-top: 0.29rem;
+        user-select: none;
+      }
+
+      > div {
+        flex: 1 1 auto;
+      }
+    }
+
+    input[type="checkbox"] {
+      cursor: pointer;
+    }
+
+    ul[data-type="taskList"] {
+      margin: 0;
+    }
+  }
+
+  a {
+    color: var(--purple);
+    cursor: pointer;
+
+    &:hover {
+      color: var(--purple-contrast);
+    }
+  }
+
+  blockquote {
+    border-left: 3px solid var(--gray-3);
+    margin: 1.5rem 0;
+    padding-left: 1rem;
+  }
+
+  img {
+    display: block;
+    height: auto;
+    margin: 1.5rem 0;
+    max-width: 100%;
+  }
+
+  table {
+    border-collapse: collapse;
+    margin: 0;
+    overflow: hidden;
+    table-layout: fixed;
+    width: 100%;
+
+    td, th {
+      border: 1px solid var(--gray-3);
+      box-sizing: border-box;
+      min-width: 1em;
+      padding: 6px 8px;
+      position: relative;
+      vertical-align: top;
+      z-index: 1;
+
+      > * {
+        margin-bottom: 0;
+        position: relative;
+        z-index: 3;
+      }
+    }
+
+    th {
+      background-color: var(--gray-1);
+      font-weight: bold;
+      text-align: left;
+    }
+
+    .selectedCell:after {
+      background: rgba(224, 224, 224, 0.4);
+      content: "";
+      left: 0;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      pointer-events: none;
+      position: absolute;
+      z-index: 2;
+      mix-blend-mode: multiply;
+    }
+
+    .column-resize-handle {
+      background-color: var(--purple);
+      bottom: -2px;
+      pointer-events: none;
+      position: absolute;
+      right: -2px;
+      top: 0;
+      width: 4px;
+      z-index: 4; /* 手柄保持最高层级 */
+    }
+  }
+
+
+  .tableWrapper {
+    margin: 1.5rem 0;
+    overflow-x: auto;
+  }
+
+
+  /* ProseMirror 样式 */
+  .ProseMirror,
+  .ProseMirror:focus {
+    outline: none;
+  }
+
+  .ProseMirror {
+    min-height: 100px;
+    border: 1px solid transparent;
+    transition: border-color 0.2s ease;
+  }
+
+  .ProseMirror:focus {
+    background-color: rgba(0, 0, 0, 0.03);
+    transition: background-color 0.2s ease;
+  }
+
+  .ProseMirror-selectednode {
+    outline: 3px solid var(--purple);
+  }
+
+  .ProseMirror-selectednode .image-wrapper::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border: 2px solid #0096fd;
+    pointer-events: none;
+  }
+
+  /* 工具栏样式 */
+  .tiptap-tools {
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border-radius: var(--button-radius);
+    background-color: #f9f9f9;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+
+    /* 按钮样式 */
+    .editor-btn {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: none;
+      margin-right: 2px !important;
+      margin-bottom: 2px !important;
+      border-radius: var(--button-radius) !important;
+      min-width: 36px;
+      height: 36px !important;
+      padding: 0 !important;
+
+      &:hover {
+        transform: translateY(-1px);
+        box-shadow: var(--button-shadow);
+        background-color: rgba(63, 81, 181, 0.08);
+
+        .v-icon {
+          transform: scale(1.1);
+        }
+      }
+
+      .v-icon {
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        font-size: 18px;
+      }
+    }
+
+    /* 激活状态样式 */
+    .active {
+      background-color: var(--primary) !important;
+      color: white !important;
+
+      &:hover {
+        background-color: var(--primary-dark) !important;
+      }
+
+      .v-icon {
+        color: white !important;
+      }
+    }
+
+    /* 按钮组样式 */
+    .text-style-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px;
+
+      /* 添加分组效果 */
+      &::after {
+        content: '';
+        display: block;
+        width: 100%;
+        height: 1px;
+        background-color: var(--border-color);
+        margin: 6px 0;
+      }
+    }
+
+    /* 添加颜色选择器按钮样式 */
+    .v-menu {
+      display: inline-block;
+    }
+
+    /* 对话框按钮样式 */
+    .v-card-actions {
+      .v-btn {
+        transition: all 0.2s ease;
+
+        &:hover {
+          transform: translateY(-1px);
+        }
+      }
+    }
+  }
+
+  /* 图片包装器样式 */
+  .image-wrapper {
+    position: relative;
+    display: inline-block;
+
+    img {
+      display: block;
+    }
+
+    .resize-handle {
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background-color: #ca72ff;
+      border-radius: 50%;
+
+      &.bottom-right {
+        bottom: -4px;
+        right: -4px;
+        cursor: se-resize;
+      }
+    }
+  }
+  .image-wrapper.align-left {
+    text-align: left;
+  }
+  .image-wrapper.align-center {
+    text-align: center;
+    margin: 0 auto;
+  }
+  .image-wrapper.align-right {
+    text-align: right;
+    margin-left: auto;
+  }
+}
+</style>

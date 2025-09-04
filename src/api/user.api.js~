@@ -1,0 +1,22 @@
+import {baseApi, authApi} from "@/utils/axios";
+
+export const register = (userData) => {
+    return baseApi.post('/user/register', userData)
+}
+
+export const login = (credential) => {
+    return baseApi.post('/user/login', credential)
+}
+/**
+ * 上传图片到服务器
+ * @param {string} credential.name - 用户名称
+ * @param {string} credential.password - 密码
+ * @param {string} credential.email - 邮箱
+ * @param {File} credential.avatar - 用户头像
+ * @returns {Promise<axios.AxiosResponse<any>>} - 服务器响应
+ */
+export const edit = (credential) => {
+    return authApi.put('/user/edit', credential)
+}
+
+
