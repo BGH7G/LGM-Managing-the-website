@@ -122,6 +122,7 @@ const pubForm = ref({
   KeywordIds: []
 })
 
+const authorOrder = ref([])
 const snackbar = ref({ show: false, text: '', color: 'success' })
 
 const fetchSubResources = async () => {
@@ -240,7 +241,7 @@ const submitPublication = async () => {
       authors: Array.isArray(pubForm.value.AuthorIds) ? pubForm.value.AuthorIds.map(Number) : [],
       keywords: Array.isArray(pubForm.value.KeywordIds) ? pubForm.value.KeywordIds.map(Number) : []
     }
-
+    
     let resp
     if (isEditing.value) {
       resp = await updatePublication(currentPubId, payload)
@@ -256,6 +257,7 @@ const submitPublication = async () => {
       Object.assign(pubForm.value, {
         title: '', abstract: '', year: new Date().getFullYear(), citations: 0, doi: '', pdfUrl: '', codeUrl: '',
         VenueId: null, PublicationTypeId: null, ResearchCategoryId: null, AuthorIds: [], KeywordIds: [] })
+      authorOrder.value = []
     }
   } catch (e) {
     console.error('创建出版物失败', e)
@@ -281,6 +283,7 @@ function openEdit() {
     AuthorIds: detail.value.Authors ? detail.value.Authors.map(a=>a.id) : [],
     KeywordIds: detail.value.Keywords ? detail.value.Keywords.map(k=>k.id) : []
   })
+  authorOrder.value = [...pubForm.value.AuthorIds]
   detailDialog.value = false
   pubDialog.value = true
 }
@@ -305,6 +308,14 @@ async function handleDelete() {
     snackbar.value = { show: true, text: '删除失败', color: 'error' }
   }
 }
+function handleAuthorSelect(value) {
+  const next = Array.isArray(value) ? value : []
+  const kept = authorOrder.value.filter(id => next.includes(id))
+  const added = next.filter(id => !authorOrder.value.includes(id))
+  authorOrder.value = [...kept, ...added]
+  pubForm.value.AuthorIds = [...authorOrder.value]
+}
+
 </script>
 
 <template>
@@ -501,7 +512,19 @@ async function handleDelete() {
               </v-select>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-select :items="authors" item-title="name" item-value="id" v-model="pubForm.AuthorIds" label="作者" multiple chips variant="outlined" density="compact" class="mb-3">
+              <v-select
+                :items="authors"
+                item-title="name"
+                item-value="id"
+                v-model="pubForm.AuthorIds"
+                @update:model-value="handleAuthorSelect"
+                label="作者"
+                multiple
+                chips
+                variant="outlined"
+                density="compact"
+                class="mb-3"
+              >
                 <template #append>
                   <v-btn icon="mdi-plus" size="x-small" @click="openAddResource('author')"/>
                 </template>

@@ -52,7 +52,7 @@ const vuetify = createVuetify({
                     background: '#0F172A',
                     surface: '#1E293B',
                     'on-background': '#F8FAFC',
-                    'on-surface': '#E2E8F0',
+                    'on-surface': '#9a9a9a',
                 }
             }
         }
