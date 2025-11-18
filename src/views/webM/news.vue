@@ -568,6 +568,8 @@ async function saveContent() {
     const nextStatus = editingOriginalStatus.value === 'archived' ? editingOriginalStatus.value : (editingStatus.value || editingOriginalStatus.value)
     items.value = (items.value || []).map(it => it.id === id ? { ...it, status: nextStatus } : it)
     if (detailDialog.value && detailData.value?.id === id) {
+    console.log(editContent.value);
+    
       detailData.value = { ...detailData.value, content: editContent.value, status: nextStatus }
     }
     snackbar.value = { show: true, text: '保存成功', color: 'success' }

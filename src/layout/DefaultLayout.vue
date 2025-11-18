@@ -103,6 +103,7 @@ const baseNav = [
   {title: '图片展示', icon: 'mdi-image-multiple', path: '/photo'},
   {title: '耗材管理', icon: 'mdi-hexagon-multiple', path: '/goods'},
   {title: '文章创作', icon: 'mdi-file-edit', path: '/textEditor'},
+  {title: '代码分享', icon: 'mdi-share-variant', path: '/codeShare'},
   {title: '报账申请', icon: 'mdi-account-cash', path: '/claim'}
 ]
 

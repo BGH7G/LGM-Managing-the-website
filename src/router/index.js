@@ -123,6 +123,11 @@ const router = createRouter({
                     path: '/help',
                     name: 'help',
                     component: () => import('../views/help.vue'),
+                },
+                {
+                    path: '/codeShare',
+                    name: 'codeShare',
+                    component: () => import('../views/dataShow/codeShare.vue'),
                 }
             ]
         },
