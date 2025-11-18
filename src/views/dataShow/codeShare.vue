@@ -835,14 +835,16 @@ async function submitUpload() {
       description: uploadData.value.description
     }
     
-    if (uploadData.value.codeFile && uploadData.value.codeFile.length > 0) {
-      formData.codeFile = uploadData.value.codeFile[0]
+    if (uploadData.value.codeFile) {
+      formData.codeFile = uploadData.value.codeFile
     }
     
     if (uploadData.value.previewImages && uploadData.value.previewImages.length > 0) {
       formData.images = uploadData.value.previewImages
     }
     
+    console.log(formData.codeFile)
+
     const response = await createCodeShare(formData)
     if (response.data.success) {
       showSnackbar('代码上传成功！', 'success')
