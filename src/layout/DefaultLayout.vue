@@ -74,6 +74,7 @@ const baseNav = [
     title: '数据',
     icon: 'mdi-chart-bar',
     children: [
+      {title: '数据库', path: '/dataSheet'},
       {
         title: '湖羊数据',
         children: [

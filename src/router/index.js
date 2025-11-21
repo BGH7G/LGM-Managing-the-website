@@ -1,7 +1,7 @@
-import {createRouter, createWebHistory} from 'vue-router'
+import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/Home.vue'
 import DefaultLayout from '../layout/DefaultLayout.vue'
-import {useUserStore} from '@/stores/auth'
+import { useUserStore } from '@/stores/auth'
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -14,110 +14,110 @@ const router = createRouter({
                     path: '',
                     name: 'Home',
                     component: HomeView,
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/profile',
                     name: 'profile',
                     component: () => import("@/views/profile.vue"),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/dataShow/huSheep/huSheepIndividual',
                     name: 'huSheep_Individual',
                     component: () => import('@/views/dataShow/huSheep/huSheepIndividual.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/dataShow/huSheep/:id',
                     name: 'huSheep_detail',
                     component: () => import('@/views/dataShow/huSheep/huSheepDetail.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/dataShow/huSheep/huSheepPhenotype',
                     name: 'huSheep_phenotype',
                     component: () => import('@/views/dataShow/huSheep/huSheepPhenotype.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 }, {
                     path: '/dataShow/holstein/holsteinIndividual',
                     name: 'holstein_Individual',
                     component: () => import('@/views/dataShow/holstein/holsteinIndividual.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     //phenotype
                     path: '/dataShow/holstein/holsteinPhenotype',
                     name: 'holstein_phenotype',
                     component: () => import('@/views/dataShow/holstein/holsteinPhenotype.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     // location
                     path: '/dataShow/location',
                     name: 'location',
                     component: () => import('@/views/dataShow/location.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 }, {
                     // ageMilestone
                     path: '/dataShow/ageMilestone',
                     name: 'ageMilestone',
                     component: () => import('@/views/dataShow/ageMilestone.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/goods',
                     name: 'goods',
                     component: () => import('../views/dataShow/goods.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/photo',
                     name: 'photos',
                     component: () => import('../views/dataShow/photo.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
-                    path:'/textEditor',
+                    path: '/textEditor',
                     name: 'textEditor',
                     component: () => import('../views/textEditor.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
-                    path:'/approval',
+                    path: '/approval',
                     name: 'approval',
                     component: () => import('../views/dataShow/approval.vue'),
-                    meta: {requiresAuth: true, role: ['admin']}
+                    meta: { requiresAuth: true, role: ['admin'] }
                 },
                 {
-                    path:'/claim',
+                    path: '/claim',
                     name: 'claim',
                     component: () => import('../views/dataShow/claim.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/photo/:id',
                     name: 'photo_detail',
                     component: () => import('@/views/dataShow/photoIndividual.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
-                    path:'/news',
+                    path: '/news',
                     name: 'news',
                     component: () => import('../views/webM/news.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/member',
                     name: 'member',
                     component: () => import('../views/webM/member.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/publish',
                     name: 'publish',
                     component: () => import('../views/webM/publish.vue'),
-                    meta: {requiresAuth: true}
+                    meta: { requiresAuth: true }
                 },
                 {
                     path: '/help',
@@ -128,6 +128,25 @@ const router = createRouter({
                     path: '/codeShare',
                     name: 'codeShare',
                     component: () => import('../views/dataShow/codeShare.vue'),
+                    meta: { requiresAuth: true }
+                },
+                {
+                    path: '/dataSheet',
+                    name: 'dataSheet',
+                    component: () => import('../views/dataShow/dataSheet.vue'),
+                    meta: { requiresAuth: true }
+                },
+                {
+                    path: '/dataSheet/:id',
+                    name: 'experimentDetail',
+                    component: () => import('../views/dataShow/experimentDetail.vue'),
+                    meta: { requiresAuth: true }
+                },
+                {
+                    path: '/dataSheet/:id/data',
+                    name: 'experimentDataOnly',
+                    component: () => import('../views/dataShow/experimentDataOnly.vue'),
+                    meta: { requiresAuth: true }
                 }
             ]
         },
@@ -135,13 +154,13 @@ const router = createRouter({
             path: '/login',
             name: 'login',
             component: () => import('../views/Login.vue'),
-            meta: {requiresAuth: false}
+            meta: { requiresAuth: false }
         },
         {
             path: '/register',
             name: 'register',
             component: () => import('../views/Register.vue'),
-            meta: {requiresAuth: false}
+            meta: { requiresAuth: false }
         }
     ],
 })
