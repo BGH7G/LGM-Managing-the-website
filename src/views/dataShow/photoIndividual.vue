@@ -1,5 +1,5 @@
 <template>
-  <v-container>
+  <v-container fluid class="photo-detail-page pa-4">
     <v-alert
       v-if="alert.show"
       :type="alert.type"
@@ -12,21 +12,41 @@
       {{ alert.message }}
     </v-alert>
 
-    <v-row align="center" justify="space-between" class="mb-4">
-      <v-btn icon @click="router.back()">
-        <v-icon>mdi-arrow-left</v-icon>
-      </v-btn>
-      <v-row>
-        <v-col cols="12">
-          <v-card class="ml-5 mr-5 elevation-0">
-            <v-card-title class="text-h4 text-center">{{ album?.name }}</v-card-title>
-            <v-card-subtitle class="text-h6 text-center">{{ album?.description }}</v-card-subtitle>
-          </v-card>
-        </v-col>
-      </v-row>
-      <v-btn color="primary" @click="uploadDialog=true" prepend-icon="mdi-upload">上传图片</v-btn>
+    <v-row class="mb-4">
+      <v-col cols="12">
+        <v-card class="glass-card pa-4">
+          <v-row align="center" no-gutters>
+            <v-col cols="12" md="7">
+              <div class="d-flex align-center">
+                <v-btn icon variant="text" class="mr-3" @click="router.back()">
+                  <v-icon>mdi-arrow-left</v-icon>
+                </v-btn>
+                <div>
+                  <div class="text-overline text-brand-muted mb-1">相册详情</div>
+                  <div class="text-h5 font-weight-bold">{{ album?.name || '相册' }}</div>
+                  <div class="text-body-2 text-brand-muted mt-1">
+                    {{ album?.description || '暂无描述' }}
+                  </div>
+                </div>
+              </div>
+            </v-col>
+            <v-col cols="12" md="5" class="d-flex justify-end align-center flex-wrap">
+              <v-chip color="primary" variant="flat" size="small" class="mr-2 mb-2">
+                照片 {{ photoStats.total }}
+              </v-chip>
+              <v-chip color="secondary" variant="flat" size="small" class="mr-2 mb-2">
+                当前页 {{ pagination.currentPage }}/{{ pagination.totalPages || 1 }}
+              </v-chip>
+              <v-btn color="primary" class="glass-card mb-2" prepend-icon="mdi-upload" @click="uploadDialog = true">
+                上传图片
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
     </v-row>
-    <v-row>
+
+    <v-row dense>
       <v-col
         v-for="(photo, index) in photos"
         :key="photo.id"
@@ -37,31 +57,41 @@
         xl="2"
         class="d-flex child-flex"
       >
-        <div class="photo-item w-100">
-          <v-img
-            :lazy-src="getSrc(photo.filename ?? photo.path, true)"
-            :src="getSrc(photo.filename ?? photo.path)"
-            aspect-ratio="1"
-            class="bg-grey-lighten-2"
-            cover
-            @click="openViewer(index)"
-          >
-            <template #placeholder>
-              <v-row class="fill-height ma-0" align="center" justify="center">
-                <v-progress-circular indeterminate color="grey-lighten-5" />
-              </v-row>
-            </template>
-          </v-img>
-          <v-btn
-            icon
-            variant="flat"
-            size="x-small"
-            class="delete-photo-btn"
-            @click.stop="promptDelete(photo.id)"
-          >
-            <v-icon size="small">mdi-delete</v-icon>
-          </v-btn>
-        </div>
+        <v-hover v-slot="{ props, isHovering }">
+          <div class="photo-item glass-card w-100" v-bind="props">
+            <v-img
+              :lazy-src="getSrc(photo.filename ?? photo.path, true)"
+              :src="getSrc(photo.filename ?? photo.path)"
+              aspect-ratio="1"
+              class="photo-img"
+              cover
+              @click="openViewer(index)"
+            >
+              <template #placeholder>
+                <v-row class="fill-height ma-0" align="center" justify="center">
+                  <v-progress-circular indeterminate color="grey-lighten-5" />
+                </v-row>
+              </template>
+              <div class="photo-overlay" v-if="isHovering">
+                <div class="text-body-2">{{ photo.originalName || photo.name || '图片' }}</div>
+              </div>
+            </v-img>
+            <div class="photo-meta d-flex align-center justify-space-between px-2 py-1">
+              <span class="text-caption text-brand-muted">
+                {{ photo.createdAt ? new Date(photo.createdAt).toLocaleDateString() : '' }}
+              </span>
+              <v-btn
+                icon
+                variant="text"
+                size="x-small"
+                color="error"
+                @click.stop="promptDelete(photo.id)"
+              >
+                <v-icon size="small">mdi-delete</v-icon>
+              </v-btn>
+            </div>
+          </div>
+        </v-hover>
       </v-col>
     </v-row>
 
@@ -192,7 +222,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch, reactive } from 'vue';
+import { ref, onMounted, watch, reactive, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { getAlbumById } from '@/api/album.api';
 import { getPhotos, uploadImage, deleteImage } from '@/api/photo.api';
@@ -204,6 +234,10 @@ const albumId = ref(route.params.id);
 const album = ref(null);
 const photos = ref([]);
 const pagination = ref({ currentPage: 1, totalPages: 1, pageSize: 18 });
+const photoStats = computed(() => {
+  const total = pagination.value.totalItems ?? photos.value.length;
+  return { total };
+});
 
 const alert = reactive({ show: false, type: 'success', message: '' });
 
@@ -400,13 +434,16 @@ watch(() => route.params.id, (newId) => {
 </script>
 
 <style scoped>
+.photo-detail-page {
+  min-height: calc(100vh - 140px);
+}
+
 .viewer-card {
-  background-color: rgba(0, 0, 0, 0.6); /* 半透明背景，仅作用于卡片 */
+  background-color: rgba(0, 0, 0, 0.6);
 }
 
 .dialog-header {
-  padding: 16px 24px;
-  border-radius: 4px 4px 0 0;
+  padding: 12px 0;
 }
 
 .input-field {
@@ -428,11 +465,11 @@ watch(() => route.params.id, (newId) => {
   grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
   gap: 8px;
   width: 100%;
-  max-height: 220px; /* 限制最大高度，超出可滚动 */
+  max-height: 220px;
   overflow-y: auto;
   padding: 8px;
   border: 1px dashed #ccc;
-  border-radius: 4px;
+  border-radius: 8px;
 }
 
 .preview-item {
@@ -440,7 +477,7 @@ watch(() => route.params.id, (newId) => {
 }
 
 .preview-img {
-  border-radius: 4px;
+  border-radius: 8px;
   cursor: pointer;
 }
 
@@ -454,25 +491,40 @@ watch(() => route.params.id, (newId) => {
 
 .add-more-container {
   border: 2px dashed #ccc;
-  border-radius: 4px;
-  min-height: 80px; /* Match min grid item size */
+  border-radius: 8px;
+  min-height: 80px;
 }
 
 .photo-item {
   position: relative;
   cursor: pointer;
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.delete-photo-btn {
+.photo-item:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.photo-img {
+  border-radius: 14px 14px 0 0;
+}
+
+.photo-overlay {
   position: absolute;
-  top: 4px;
-  right: 4px;
-  display: none; /* Hidden by default */
-  background-color: rgba(239, 83, 80, 0.8) !important; /* Reddish transparent */
-  color: white !important;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.45) 100%);
+  color: white;
+  display: flex;
+  align-items: flex-end;
+  padding: 10px;
+  font-size: 12px;
 }
 
-.photo-item:hover .delete-photo-btn {
-  display: inline-flex; /* Show on hover */
+.photo-meta {
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 12px;
 }
 </style>

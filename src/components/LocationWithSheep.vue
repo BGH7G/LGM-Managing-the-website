@@ -1,5 +1,5 @@
 <template>
-  <v-card>
+  <v-card class="glass-card">
     <v-card-title class="text-h5">
       羊只分布情况
     </v-card-title>

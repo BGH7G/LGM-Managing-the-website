@@ -1,50 +1,89 @@
 <template>
-  <v-container fluid>
-    <v-card>
-      <v-card-title class="d-flex align-center">
-        <h2 class="text-h5 font-weight-bold">样品数据展示</h2>
-        <v-spacer></v-spacer>
-        <v-btn
-            icon
-            color="teal"
-            class="ml-2 mb-2 mr-2"
-            title="添加样品"
-            @click="addDialog = true"
-        >
-          <v-icon>mdi-plus</v-icon>
-        </v-btn>
-        <v-btn
-            icon
-            color="lime"
-            title="刷新数据"
-            @click="fetchGoods"
-            :loading="loading"
-            class="ml-2 mb-2 mr-4"
-        >
-          <v-icon>mdi-refresh</v-icon>
-        </v-btn>
-        <v-btn
-            icon
-            class="mb-2"
-            color="blue-grey"
-            :title="showFilters ? '收起筛选' : '筛选选项'"
-            @click="showFilters = !showFilters"
-        >
-          <v-icon>mdi-filter-variant</v-icon>
-        </v-btn>
-      </v-card-title>
+  <v-container fluid class="goods-page pa-4">
+    <v-alert
+      v-if="alert.show"
+      :type="alert.type"
+      variant="tonal"
+      closable
+      class="mb-4 glass-card"
+      density="comfortable"
+      @click:close="alert.show = false"
+    >
+      {{ alert.message }}
+    </v-alert>
 
+    <v-row class="mb-4">
+      <v-col cols="12">
+        <v-card class="glass-card pa-4">
+          <v-row align="center" no-gutters>
+            <v-col cols="12" md="7">
+              <div class="d-flex align-center">
+                <div class="hero-dot mr-3"></div>
+                <div>
+                  <div class="text-overline text-brand-muted">Inventory</div>
+                  <div class="text-h5 font-weight-bold">耗材样品管理</div>
+                  <div class="text-body-2 text-brand-muted mt-1">
+                    快速查看、筛选与维护耗材样品，支持标签统计。
+                  </div>
+                </div>
+              </div>
+            </v-col>
+            <v-col cols="12" md="5" class="d-flex justify-end align-center flex-wrap">
+              <div class="d-flex flex-wrap mr-2 mb-2">
+                <v-chip color="primary" variant="flat" size="small" class="mr-2 mb-2">
+                  总数 {{ pagination.totalItems || goodsData.length }}
+                </v-chip>
+                <v-chip color="secondary" variant="flat" size="small" class="mr-2 mb-2">
+                  标签 {{ stats.tagCount }}
+                </v-chip>
+                <v-chip color="info" variant="flat" size="small" class="mb-2">
+                  位置 {{ stats.locationCount }}
+                </v-chip>
+              </div>
+              <v-btn
+                  color="primary"
+                  class="glass-card mb-2 mr-2"
+                  prepend-icon="mdi-plus"
+                  @click="addDialog = true"
+              >
+                添加样品
+              </v-btn>
+              <v-btn
+                  color="secondary"
+                  variant="tonal"
+                  class="mb-2"
+                  prepend-icon="mdi-refresh"
+                  @click="fetchGoods"
+                  :loading="loading"
+              >
+                刷新
+              </v-btn>
+              <v-btn
+                  variant="text"
+                  color="primary"
+                  class="mb-2"
+                  prepend-icon="mdi-filter-variant"
+                  @click="showFilters = !showFilters"
+              >
+                {{ showFilters ? '收起筛选' : '筛选' }}
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-card class="glass-card mb-4">
       <v-card-text>
-        <!-- Filters -->
         <v-expand-transition>
           <div v-if="showFilters">
-            <v-row>
+            <v-row dense>
               <v-col cols="12" sm="6" md="3">
                 <v-text-field
                     v-model="search"
                     label="搜索"
                     prepend-inner-icon="mdi-magnify"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                     variant="outlined"
                     clearable
@@ -56,7 +95,7 @@
                     v-model="selectedLocation"
                     :items="locations"
                     label="存放位置"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                     variant="outlined"
                     clearable
@@ -68,7 +107,7 @@
                     v-model="selectedTags"
                     :items="tags"
                     label="标签"
-                    density="compact"
+                    density="comfortable"
                     hide-details
                     variant="outlined"
                     clearable
@@ -77,23 +116,32 @@
                 ></v-select>
               </v-col>
 
-              <v-col cols="12" sm="6" md="2">
+              <v-col cols="12" sm="6" md="3" class="d-flex align-center">
                 <v-btn
                     color="secondary"
                     variant="tonal"
                     append-icon="mdi-text-search"
-                    block
+                    class="mr-2"
                     @click="resetFilters"
                 >
                   重置筛选
+                </v-btn>
+                <v-btn
+                    variant="text"
+                    color="primary"
+                    :title="showFilters ? '收起筛选' : '筛选选项'"
+                    @click="showFilters = !showFilters"
+                >
+                  <v-icon>mdi-filter-variant</v-icon>
                 </v-btn>
               </v-col>
             </v-row>
           </div>
         </v-expand-transition>
       </v-card-text>
+    </v-card>
 
-      <!-- Data Table -->
+    <v-card class="glass-card">
       <v-data-table
           :headers="headers"
           :items="filteredGoods"
@@ -101,7 +149,8 @@
           :items-per-page="pagination.pageSize"
           :page="pagination.currentPage"
           :server-items-length="pagination.totalItems"
-          class="elevation-1"
+          class="elevation-0"
+          density="comfortable"
           hide-default-footer
       >
         <!-- Price column -->
@@ -138,9 +187,15 @@
 
         <!-- Operations column -->
         <template v-slot:item.actions="{ item }">
-          <v-icon size="small" @click="showItemDetails(item)">mdi-book-account</v-icon>
-          <v-icon size="small"  class="ml-2" @click="openEditDialog(item)">mdi-pencil-box</v-icon>
-          <v-icon size="small" color="error" class="ml-2" @click="openDeleteDialog(item)">mdi-delete</v-icon>
+          <v-btn icon size="small" variant="text" color="primary" @click="showItemDetails(item)">
+            <v-icon>mdi-book-account</v-icon>
+          </v-btn>
+          <v-btn icon size="small" variant="text" color="secondary" @click="openEditDialog(item)">
+            <v-icon>mdi-pencil</v-icon>
+          </v-btn>
+          <v-btn icon size="small" variant="text" color="error" @click="openDeleteDialog(item)">
+            <v-icon>mdi-delete</v-icon>
+          </v-btn>
         </template>
 
         <!-- No data template -->
@@ -155,7 +210,7 @@
       <!-- 分页控件 -->
       <div class="pagination-wrapper pt-2 px-4">
         <div class="d-flex flex-wrap justify-space-between align-center">
-          <div class="text-subtitle-2 text-grey-darken-1">
+          <div class="text-subtitle-2 text-brand-muted">
             总共 <span class="font-weight-bold">{{ pagination.totalItems }}</span> 条记录
           </div>
 
@@ -270,44 +325,50 @@
     </v-dialog>
 
     <!-- Add Sample Dialog -->
-    <v-dialog v-model="addDialog" max-width="600px">
-      <v-card elevation="10" class="pa-4 rounded-xl">
-        <v-card-title class="text-h6 font-weight-bold mb-2 align-center" style="color:#1976d2">
-          添加样品
-        </v-card-title>
+    <v-dialog v-model="addDialog" max-width="720px" transition="dialog-bottom-transition">
+      <v-card class="pa-4 glass-card">
+        <div class="d-flex align-center justify-space-between mb-3">
+          <div>
+            <div class="text-overline text-brand-muted">新增样品</div>
+            <div class="text-h6 font-weight-bold">添加样品信息</div>
+          </div>
+          <v-avatar color="primary" variant="tonal">
+            <v-icon>mdi-flask</v-icon>
+          </v-avatar>
+        </div>
         <v-divider class="mb-4"></v-divider>
-        <v-card-text>
+        <v-card-text class="pt-0">
           <v-form ref="addFormRef" v-model="addFormValid">
-            <v-row>
+            <v-row dense>
               <v-col cols="12" sm="6">
-                <v-text-field v-model="addForm.sample.name" label="样品名称" :rules="[v => !!v || '必填']" required  color="primary" variant="outlined"></v-text-field>
+                <v-text-field v-model="addForm.sample.name" label="样品名称" :rules="[v => !!v || '必填']" required color="primary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
-                <v-text-field v-model="addForm.sample.description" label="样品描述"  color="primary" variant="outlined"></v-text-field>
+                <v-text-field v-model="addForm.sample.description" label="样品描述" color="primary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
-                <v-text-field v-model.number="addForm.sample.quantity" label="数量" type="number" :rules="[v => v > 0 || '需大于0']" required  color="primary" variant="outlined"></v-text-field>
+                <v-text-field v-model.number="addForm.sample.quantity" label="数量" type="number" :rules="[v => v > 0 || '需大于0']" required color="primary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
-                <v-text-field v-model.number="addForm.sample.price" label="单价" type="number" :rules="[v => v >= 0 || '需不小于0']" required  color="primary" variant="outlined"></v-text-field>
+                <v-text-field v-model.number="addForm.sample.price" label="单价" type="number" :rules="[v => v >= 0 || '需不小于0']" required color="primary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
               <v-col cols="12" sm="6">
-                <v-text-field v-model="addForm.sample.location" label="存放位置"  color="primary" variant="outlined"></v-text-field>
+                <v-text-field v-model="addForm.sample.location" label="存放位置" color="primary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
             </v-row>
-            <v-divider class="my-2"></v-divider>
-            <v-row>
+            <v-divider class="my-4"></v-divider>
+            <v-row dense>
               <v-col cols="12" sm="4">
-                <v-text-field v-model="addForm.buyer.name" label="购买人姓名" required  color="indigo" variant="outlined"></v-text-field>
+                <v-text-field v-model="addForm.buyer.name" label="购买人姓名" required color="secondary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
               <v-col cols="12" sm="4">
-                <v-text-field v-model="addForm.buyer.contact" label="联系方式" required  color="indigo" variant="outlined"></v-text-field>
+                <v-text-field v-model="addForm.buyer.contact" label="联系方式" required color="secondary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
               <v-col cols="12" sm="4">
-                <v-text-field v-model="addForm.buyer.department" label="部门" required  color="indigo" variant="outlined"></v-text-field>
+                <v-text-field v-model="addForm.buyer.department" label="部门" required color="secondary" variant="outlined" density="comfortable"></v-text-field>
               </v-col>
             </v-row>
-            <v-divider class="my-2"></v-divider>
+            <v-divider class="my-4"></v-divider>
             <v-row>
               <v-col cols="12">
                 <v-combobox
@@ -320,8 +381,9 @@
                     item-text="name"
                     item-value="name"
                     small-chips
-                    color="deep-purple"
+                    color="secondary"
                     variant="outlined"
+                    density="comfortable"
                 ></v-combobox>
               </v-col>
             </v-row>
@@ -329,8 +391,8 @@
         </v-card-text>
         <v-card-actions class="mt-2">
           <v-spacer></v-spacer>
-          <v-btn color="primary" @click="submitAddSample" :loading="addLoading" class="elevation-2 px-6" style="border-radius:20px;">提交</v-btn>
-          <v-btn text @click="addDialog = false" class="px-6" style="border-radius:20px;">取消</v-btn>
+          <v-btn variant="text" @click="addDialog = false" class="px-6" style="border-radius:16px;">取消</v-btn>
+          <v-btn color="primary" @click="submitAddSample" :loading="addLoading" class="elevation-2 px-6" style="border-radius:16px;">提交</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
@@ -338,7 +400,7 @@
     <!-- Edit Dialog -->
     <v-dialog v-model="showEditDialog" max-width="600px">
       <v-card elevation="10" class="pa-4 rounded-xl">
-        <v-card-title class="text-h6 font-weight-bold mb-2 align-center" style="color:#1976d2">
+        <v-card-title class="text-h6 font-weight-bold mb-2 align-center text-primary">
           <v-icon color="primary" class="mr-2">mdi-pencil</v-icon>
           修改样品
         </v-card-title>
@@ -392,7 +454,7 @@
 </template>
 
 <script setup>
-import {ref, onMounted, computed} from 'vue';
+import {ref, onMounted, computed, reactive} from 'vue';
 import {getGoods} from '@/api/goods.api';
 import {addGoods} from '@/api/goods.api';
 import {deleteGoods} from '@/api/goods.api';
@@ -457,6 +519,23 @@ const pagination = ref({
 
 // 每页条数选项
 const pageSizeOptions = [50, 100, 200, 300];
+
+const stats = computed(() => {
+  const tagSet = new Set();
+  const locationSet = new Set();
+  goodsData.value.forEach(item => {
+    if (item.Tags) item.Tags.forEach(t => tagSet.add(t.name));
+    if (item.location) locationSet.add(item.location);
+  });
+  return { tagCount: tagSet.size, locationCount: locationSet.size };
+});
+
+const alert = reactive({
+  show: false,
+  message: '',
+  type: 'success',
+  timeout: 3000
+});
 
 // Dialog for item details
 const detailDialog = ref(false);
@@ -730,22 +809,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
+.goods-page {
+  min-height: calc(100vh - 120px);
+}
+
+.hero-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(120deg, #5ba6a6, #2d3a8c);
+  box-shadow: 0 0 12px rgba(45, 58, 140, 0.35);
+}
+
 .v-data-table {
-  margin-top: 16px;
-}
-
-.v-card-title {
-  padding-bottom: 0;
-}
-
-.position-relative {
-  position: relative;
-}
-
-.close-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 1;
+  margin-top: 8px;
 }
 </style>

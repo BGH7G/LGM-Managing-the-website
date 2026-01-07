@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { getPublications, getPublicationById, createPublication, updatePublication, deletePublication,
   getAuthors, createAuthor, updateAuthor,
   getKeywords, createKeyword, updateKeyword,
@@ -89,6 +89,14 @@ const handlePageChange = (page) => {
   currentPage.value = page
   fetchPublications()
 }
+
+const pubStats = computed(() => {
+  const total = totalItems.value || publications.value.length
+  const citations = publications.value.reduce((sum, p) => sum + (Number(p.citations) || 0), 0)
+  const years = publications.value.map(p => Number(p.year) || 0).filter(Boolean)
+  const latestYear = years.length ? Math.max(...years) : '-'
+  return { total, citations, latestYear }
+})
 
 // 用户角色
 const userRole = (() => {
@@ -319,176 +327,201 @@ function handleAuthorSelect(value) {
 </script>
 
 <template>
-  <v-container fluid>
-    <v-card>
-      <v-card-title class="text-h5">出版物列表
-        <v-spacer/>
-        <v-btn
-            v-if="userRole==='admin'"
-            color="primary"
-            prepend-icon="mdi-plus"
-            @click="pubDialog=true">新增出版物</v-btn>
-      </v-card-title>
-      <v-card-text>
-        <!-- 数据表 -->
-        <v-data-table
-            :headers="headers"
-            :items="publications"
-            :loading="loading"
-            :items-per-page="pageSize"
-            loading-text="加载中..."
-            no-data-text="暂无数据"
-            class="elevation-1"
-            @click:row="openDetailDialog"
-        />
+  <v-container fluid class="publish-page pa-4">
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">{{ snackbar.text }}</v-snackbar>
 
-        <!-- 分页 -->
-        <v-row v-if="totalPages > 1" class="mt-4">
-          <v-col cols="12" class="d-flex justify-center">
-            <v-pagination
-                v-model="currentPage"
-                :length="totalPages"
-                @update:model-value="handlePageChange"
-            />
-          </v-col>
-        </v-row>
-      </v-card-text>
+    <v-row class="mb-4">
+      <v-col cols="12">
+        <v-card class="glass-card pa-4">
+          <v-row align="center" no-gutters>
+            <v-col cols="12" md="7">
+              <div class="d-flex align-center">
+                <div class="hero-dot mr-3"></div>
+                <div>
+                  <div class="text-overline text-brand-muted">Publication Hub</div>
+                  <div class="text-h5 font-weight-bold">出版物管理</div>
+                  <div class="text-body-2 text-brand-muted mt-1">
+                    课题组科研成果。
+                  </div>
+                </div>
+              </div>
+            </v-col>
+            <v-col cols="12" md="5" class="d-flex justify-end align-center flex-wrap">
+              <div class="d-flex flex-wrap mr-2 mb-2">
+                <v-chip color="primary" variant="flat" size="small" class="mr-2 mb-2">总计 {{ pubStats.total }}</v-chip>
+                <v-chip color="secondary" variant="flat" size="small" class="mr-2 mb-2">最新年份 {{ pubStats.latestYear }}</v-chip>
+                <v-chip color="info" variant="flat" size="small" class="mb-2">引用 {{ pubStats.citations }}</v-chip>
+              </div>
+              <v-btn
+                  v-if="userRole==='admin'"
+                  color="primary"
+                  class="glass-card mb-2"
+                  prepend-icon="mdi-plus"
+                  @click="pubDialog=true">
+                新增出版物
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-card class="glass-card pa-3">
+      <v-data-table
+          :headers="headers"
+          :items="publications"
+          :loading="loading"
+          :items-per-page="pageSize"
+          loading-text="加载中..."
+          no-data-text="暂无数据"
+          class="elevation-0"
+          @click:row="openDetailDialog"
+          density="comfortable"
+      />
+
+      <v-row v-if="totalPages > 1" class="mt-4">
+        <v-col cols="12" class="d-flex justify-center">
+          <v-pagination
+              v-model="currentPage"
+              :length="totalPages"
+              @update:model-value="handlePageChange"
+          />
+        </v-col>
+      </v-row>
     </v-card>
 
     <!-- 详情对话框 -->
-    <v-dialog v-model="detailDialog" max-width="500px">
-      <v-card>
-        <v-card-title class="primary white--text py-2 d-flex justify-center">
-          <span class="text-h4 font-weight-bold mt-2">出版物详情</span>
-        </v-card-title>
-        <v-card-text class="pt-2">
+    <v-dialog v-model="detailDialog" max-width="680px">
+      <v-card class="glass-card pa-4">
+        <div class="d-flex align-center justify-space-between mb-2">
+          <div>
+            <div class="text-overline text-brand-muted">出版物详情</div>
+            <div class="text-h6 font-weight-bold">{{ detail?.title || '加载中' }}</div>
+          </div>
+          <v-avatar color="primary" variant="tonal">
+            <v-icon>mdi-book-open-variant</v-icon>
+          </v-avatar>
+        </div>
+        <v-divider class="mb-3" />
+        <v-card-text class="pt-0">
           <v-progress-linear v-if="detailLoading" indeterminate color="primary" />
           <template v-else-if="detail">
-            <v-container class="py-0">
-              <v-row dense>
-                <v-col cols="12" class="py-1">
-                  <v-subheader class="font-weight-bold pl-0 py-1 d-flex justify-center text-h5">基本信息</v-subheader>
-                  <v-divider class="my-1"></v-divider>
-                </v-col>
-                <v-col cols="12" class="py-0">
-                  <v-list density="compact" class="py-0">
-                    <v-list-item title="标题" :subtitle="detail.title" class="py-1" />
-                    <v-list-item title="摘要" class="py-1">
-                      <template #subtitle>
-                        <div style="white-space: pre-wrap">{{ detail.abstract }}</div>
-                      </template>
-                    </v-list-item>
-                    <v-list-item title="年份" :subtitle="String(detail.year)" class="py-1" />
-                    <v-list-item title="引用量" :subtitle="String(detail.citations)" class="py-1" />
-                    <v-list-item title="DOI" :subtitle="detail.doi" class="py-1" />
-                    <v-list-item v-if="detail.pdfUrl" title="PDF" :subtitle="detail.pdfUrl" class="py-1" />
-                    <v-list-item v-if="detail.codeUrl" title="代码" :subtitle="detail.codeUrl" class="py-1" />
-                  </v-list>
-                </v-col>
-
-                <v-col cols="12" class="py-1">
-                  <v-subheader class="font-weight-bold pl-0 py-1 d-flex justify-center text-h5">分类信息</v-subheader>
-                  <v-divider class="my-1"></v-divider>
-                </v-col>
-                <v-col cols="12" class="py-0">
-                  <v-list density="compact" class="py-0">
-                    <v-list-item title="类型" :subtitle="detail.PublicationType?.name" class="py-1" />
-                    <v-list-item title="期刊/会议" :subtitle="detail.Venue?.name" class="py-1" />
-                    <v-list-item title="研究领域" :subtitle="detail.ResearchCategory?.name" class="py-1" />
-                  </v-list>
-                </v-col>
-
-                <v-col cols="12" class="py-1">
-                  <v-subheader class="font-weight-bold pl-0 py-1 d-flex justify-center text-h5">作者与关键词</v-subheader>
-                  <v-divider class="my-1"></v-divider>
-                </v-col>
-                <v-col cols="12" class="py-0">
-                  <v-list density="compact" class="py-0">
-                    <v-list-item title="作者" class="py-1">
-                      <template #subtitle>
-                        <v-chip
-                          v-for="a in detail.Authors"
-                          :key="a.id"
-                          class="ma-1"
-                          color="primary"
-                          variant="tonal"
-                          size="small"
-                        >
-                          {{ a.name }}
-                        </v-chip>
-                      </template>
-                    </v-list-item>
-                    <v-list-item title="关键词" class="py-1">
-                      <template #subtitle>
-                        <v-chip
-                          v-for="k in detail.Keywords"
-                          :key="k.id"
-                          class="ma-1"
-                          color="secondary"
-                          variant="tonal"
-                          size="small"
-                        >
-                          {{ k.name }}
-                        </v-chip>
-                      </template>
-                    </v-list-item>
-                  </v-list>
-                </v-col>
-
-                <v-col cols="12" class="py-1" v-if="detail.createdAt || detail.updatedAt">
-                  <v-subheader class="font-weight-bold pl-0 py-1 d-flex justify-center text-h5">时间信息</v-subheader>
-                  <v-divider class="my-1"></v-divider>
-                </v-col>
-                <v-col cols="12" class="py-0" v-if="detail.createdAt || detail.updatedAt">
-                  <v-list density="compact" class="py-0">
-                    <v-list-item v-if="detail.createdAt" title="创建时间" :subtitle="new Date(detail.createdAt).toLocaleString()" class="py-1" />
-                    <v-list-item v-if="detail.updatedAt" title="更新时间" :subtitle="new Date(detail.updatedAt).toLocaleString()" class="py-1" />
-                  </v-list>
-                </v-col>
-              </v-row>
-            </v-container>
+            <div class="detail-row">
+              <div class="detail-item">
+                <div class="label">年份</div>
+                <div class="value">{{ detail.year || '-' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">引用</div>
+                <div class="value">{{ detail.citations || 0 }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">类型</div>
+                <div class="value">{{ detail.PublicationType?.name || '-' }}</div>
+              </div>
+              <div class="detail-item">
+                <div class="label">期刊/会议</div>
+                <div class="value">{{ detail.Venue?.name || '-' }}</div>
+              </div>
+            </div>
+            <div class="detail-block">
+              <div class="label">摘要</div>
+              <div class="value text-body-2">{{ detail.abstract || '暂无摘要' }}</div>
+            </div>
+            <div class="detail-block dual">
+              <div>
+                <div class="label">DOI</div>
+                <div class="value text-body-2 break-all">{{ detail.doi || '-' }}</div>
+              </div>
+              <div v-if="detail.pdfUrl">
+                <div class="label">PDF</div>
+                <div class="value text-body-2 break-all">{{ detail.pdfUrl }}</div>
+              </div>
+              <div v-if="detail.codeUrl">
+                <div class="label">代码</div>
+                <div class="value text-body-2 break-all">{{ detail.codeUrl }}</div>
+              </div>
+            </div>
+            <div class="detail-block">
+              <div class="label">作者</div>
+              <div class="chip-list">
+                <v-chip
+                  v-for="a in detail.Authors"
+                  :key="a.id"
+                  class="ma-1"
+                  color="primary"
+                  variant="tonal"
+                  size="small"
+                >
+                  {{ a.name }}
+                </v-chip>
+              </div>
+            </div>
+            <div class="detail-block">
+              <div class="label">关键词</div>
+              <div class="chip-list">
+                <v-chip
+                  v-for="k in detail.Keywords"
+                  :key="k.id"
+                  class="ma-1"
+                  color="secondary"
+                  variant="tonal"
+                  size="small"
+                >
+                  {{ k.name }}
+                </v-chip>
+              </div>
+            </div>
           </template>
           <template v-else>加载失败，请重试。</template>
         </v-card-text>
-        <v-card-actions class="px-4 pb-2">
+        <v-card-actions class="px-2">
           <v-spacer></v-spacer>
-          <v-btn class="mb-2 ml-2" v-if="userRole==='admin'" color="teal-darken-3" variant="elevated" @click="openEdit" small>编辑</v-btn>
-          <v-btn class="mb-2 ml-2" v-if="userRole==='admin'" color="error" variant="elevated" @click="openDelete" small>删除</v-btn>
-          <v-btn class="mb-2 ml-2" color="primary" variant="elevated" @click="detailDialog = false" small>关闭</v-btn>
+          <v-btn v-if="userRole==='admin'" variant="text" color="primary" @click="openEdit">编辑</v-btn>
+          <v-btn v-if="userRole==='admin'" variant="text" color="error" @click="openDelete">删除</v-btn>
+          <v-btn color="primary" variant="flat" @click="detailDialog = false">关闭</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- 新增出版物对话框 -->
-    <v-dialog v-model="pubDialog" max-width="800px">
-      <v-card class="pa-4">
-        <v-card-title class="py-2 text-h6 font-weight-bold">{{ isEditing ? '编辑出版物' : '新增出版物' }}</v-card-title>
-        <v-card-text>
-          <v-row>
+    <v-dialog v-model="pubDialog" max-width="860px">
+      <v-card class="pa-4 glass-card">
+        <div class="d-flex align-center justify-space-between mb-2">
+          <div>
+            <div class="text-overline text-brand-muted">{{ isEditing ? '编辑出版物' : '新增出版物' }}</div>
+            <div class="text-h6 font-weight-bold">{{ isEditing ? '更新论文条目' : '创建新的论文条目' }}</div>
+          </div>
+          <v-avatar color="primary" variant="tonal">
+            <v-icon>mdi-notebook-edit</v-icon>
+          </v-avatar>
+        </div>
+        <v-divider class="mb-3" />
+        <v-card-text class="pt-0">
+          <v-row dense>
             <v-col cols="12" sm="8">
-              <v-text-field v-model="pubForm.title" label="标题" variant="outlined" density="compact" class="mb-3" />
+              <v-text-field v-model="pubForm.title" label="标题" variant="outlined" density="comfortable" class="mb-3" />
             </v-col>
             <v-col cols="12" sm="4">
-              <v-text-field v-model.number="pubForm.year" label="年份" type="number" variant="outlined" density="compact" class="mb-3" />
+              <v-text-field v-model.number="pubForm.year" label="年份" type="number" variant="outlined" density="comfortable" class="mb-3" />
             </v-col>
             <v-col cols="12">
-              <v-textarea v-model="pubForm.abstract" label="摘要" rows="3" variant="outlined" density="compact" class="mb-3" />
+              <v-textarea v-model="pubForm.abstract" label="摘要" rows="3" variant="outlined" density="comfortable" class="mb-3" />
             </v-col>
             <v-col cols="12" sm="4">
-              <v-text-field v-model.number="pubForm.citations" label="引用量" type="number" variant="outlined" density="compact" class="mb-3" />
+              <v-text-field v-model.number="pubForm.citations" label="引用量" type="number" variant="outlined" density="comfortable" class="mb-3" />
             </v-col>
             <v-col cols="12" sm="4">
-              <v-text-field v-model="pubForm.doi" label="DOI" variant="outlined" density="compact" class="mb-3" />
+              <v-text-field v-model="pubForm.doi" label="DOI" variant="outlined" density="comfortable" class="mb-3" />
             </v-col>
             <v-col cols="12" sm="4">
-              <v-text-field v-model="pubForm.pdfUrl" label="PDF 链接" variant="outlined" density="compact" class="mb-3" />
+              <v-text-field v-model="pubForm.pdfUrl" label="PDF 链接" variant="outlined" density="comfortable" class="mb-3" />
             </v-col>
             <v-col cols="12" sm="4">
-              <v-text-field v-model="pubForm.codeUrl" label="代码链接" variant="outlined" density="compact" class="mb-3" />
+              <v-text-field v-model="pubForm.codeUrl" label="代码链接" variant="outlined" density="comfortable" class="mb-3" />
             </v-col>
-            <!-- 关联选择 -->
             <v-col cols="12" sm="4">
-              <v-select :items="types" item-title="name" item-value="id" v-model="pubForm.PublicationTypeId" label="类型" chips variant="outlined" density="compact" class="mb-3">
+              <v-select :items="types" item-title="name" item-value="id" v-model="pubForm.PublicationTypeId" label="类型" chips variant="outlined" density="comfortable" class="mb-3">
                 <template #append>
                   <v-btn icon="mdi-pencil" size="x-small" v-if="pubForm.PublicationTypeId" @click="openEditResource('type')"/>
                   <v-btn icon="mdi-plus" size="x-small" @click="openAddResource('type')"/>
@@ -496,7 +529,7 @@ function handleAuthorSelect(value) {
               </v-select>
             </v-col>
             <v-col cols="12" sm="4">
-              <v-select :items="venues" item-title="name" item-value="id" v-model="pubForm.VenueId" label="期刊/会议" chips variant="outlined" density="compact" class="mb-3">
+              <v-select :items="venues" item-title="name" item-value="id" v-model="pubForm.VenueId" label="期刊/会议" chips variant="outlined" density="comfortable" class="mb-3">
                 <template #append>
                   <v-btn icon="mdi-pencil" size="x-small" v-if="pubForm.VenueId" @click="openEditResource('venue')"/>
                   <v-btn icon="mdi-plus" size="x-small" @click="openAddResource('venue')"/>
@@ -504,7 +537,7 @@ function handleAuthorSelect(value) {
               </v-select>
             </v-col>
             <v-col cols="12" sm="4">
-              <v-select :items="categories" item-title="name" item-value="id" v-model="pubForm.ResearchCategoryId" label="研究分类" chips variant="outlined" density="compact" class="mb-3">
+              <v-select :items="categories" item-title="name" item-value="id" v-model="pubForm.ResearchCategoryId" label="研究分类" chips variant="outlined" density="comfortable" class="mb-3">
                 <template #append>
                   <v-btn icon="mdi-pencil" size="x-small" v-if="pubForm.ResearchCategoryId" @click="openEditResource('category')"/>
                   <v-btn icon="mdi-plus" size="x-small" @click="openAddResource('category')"/>
@@ -522,7 +555,7 @@ function handleAuthorSelect(value) {
                 multiple
                 chips
                 variant="outlined"
-                density="compact"
+                density="comfortable"
                 class="mb-3"
               >
                 <template #append>
@@ -531,7 +564,7 @@ function handleAuthorSelect(value) {
               </v-select>
             </v-col>
             <v-col cols="12" sm="6">
-              <v-select :items="keywords" item-title="name" item-value="id" v-model="pubForm.KeywordIds" label="关键词" multiple chips variant="outlined" density="compact" class="mb-3">
+              <v-select :items="keywords" item-title="name" item-value="id" v-model="pubForm.KeywordIds" label="关键词" multiple chips variant="outlined" density="comfortable" class="mb-3">
                 <template #append>
                   <v-btn icon="mdi-pencil" size="x-small" v-if="pubForm.KeywordIds && pubForm.KeywordIds.length" @click="openEditResource('keyword')"/>
                   <v-btn icon="mdi-plus" size="x-small" @click="openAddResource('keyword')"/>
@@ -542,45 +575,101 @@ function handleAuthorSelect(value) {
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="pubDialog=false">取消</v-btn>
+          <v-btn variant="text" @click="pubDialog=false">取消</v-btn>
           <v-btn :loading="submitting" color="primary" @click="submitPublication">保存</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- 新增子资源对话框 -->
-    <v-dialog v-model="addResDialog" max-width="400px">
-      <v-card>
-        <v-card-title class="py-2 text-h6 font-weight-bold">{{ resDialogMode==='add' ? '新增' : '编辑' }}{{ addResKind }}</v-card-title>
+    <v-dialog v-model="addResDialog" max-width="420px">
+      <v-card class="glass-card pa-4">
+        <div class="d-flex align-center justify-space-between mb-2">
+          <div class="text-h6 font-weight-bold">{{ resDialogMode==='add' ? '新增' : '编辑' }} {{ addResKind }}</div>
+          <v-avatar color="secondary" variant="tonal" size="32">
+            <v-icon>mdi-tag-plus</v-icon>
+          </v-avatar>
+        </div>
         <v-card-text>
-          <v-text-field v-model="newResName" label="名称" autofocus variant="outlined" density="compact" class="mb-3" />
+          <v-text-field v-model="newResName" label="名称" autofocus variant="outlined" density="comfortable" class="mb-3" />
         </v-card-text>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="addResDialog=false">取消</v-btn>
+          <v-btn variant="text" @click="addResDialog=false">取消</v-btn>
           <v-btn color="primary" @click="confirmAddResource">确定</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
 
     <!-- 删除确认对话框 -->
-    <v-dialog v-model="confirmDeleteDialog" max-width="400px">
-      <v-card>
-        <v-card-title class="text-h6">确认删除</v-card-title>
-        <v-card-text>您确定要删除吗？</v-card-text>
+    <v-dialog v-model="confirmDeleteDialog" max-width="420px">
+      <v-card class="glass-card pa-4">
+        <div class="text-h6 font-weight-bold mb-2">确认删除</div>
+        <div class="text-body-2 text-brand-muted mb-2">您确定要删除吗？</div>
         <v-card-actions>
           <v-spacer />
-          <v-btn text @click="confirmDeleteDialog=false">取消</v-btn>
-          <v-btn color="error" @click="handleDelete">确定</v-btn>
+          <v-btn variant="text" @click="confirmDeleteDialog=false">取消</v-btn>
+          <v-btn color="error" variant="flat" @click="handleDelete">确定</v-btn>
         </v-card-actions>
       </v-card>
     </v-dialog>
-
-    <!-- 提示 -->
-    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="3000">{{ snackbar.text }}</v-snackbar>
   </v-container>
 </template>
 
 <style scoped>
+.publish-page {
+  min-height: calc(100vh - 120px);
+}
 
+.hero-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(120deg, #5ba6a6, #2d3a8c);
+  box-shadow: 0 0 12px rgba(45, 58, 140, 0.35);
+}
+
+.detail-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.detail-item {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0,0,0,0.04);
+}
+
+.label {
+  font-size: 12px;
+  color: var(--brand-muted);
+  margin-bottom: 4px;
+}
+
+.value {
+  font-weight: 600;
+  color: var(--v-theme-on-surface);
+}
+
+.detail-block {
+  margin-bottom: 12px;
+}
+
+.detail-block.dual {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+}
+
+.chip-list {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.break-all {
+  word-break: break-all;
+}
 </style>

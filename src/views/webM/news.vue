@@ -1,11 +1,39 @@
 <template>
   <div class="news-list-page">
-    <v-card>
-      <v-card-title class="d-flex align-center">
-        <span>News 管理</span>
-        <v-spacer />
-        <v-btn variant="tonal" color="primary" @click="refresh" :loading="loading" prepend-icon="mdi-refresh">刷新</v-btn>
-      </v-card-title>
+    <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2000">
+      {{ snackbar.text }}
+    </v-snackbar>
+
+    <!-- 顶部概览 -->
+    <v-card class="glass-card pa-4 mb-4">
+      <v-row align="center" no-gutters>
+        <v-col cols="12" md="7">
+          <div class="d-flex align-center">
+            <div class="hero-dot mr-3"></div>
+            <div>
+              <div class="text-overline text-brand-muted">News Hub</div>
+              <div class="text-h5 font-weight-bold">新闻内容管理</div>
+              <div class="text-body-2 text-brand-muted mt-1">
+                筛选、预览、编辑新闻。
+              </div>
+            </div>
+          </div>
+        </v-col>
+        <v-col cols="12" md="5" class="d-flex justify-end align-center flex-wrap">
+          <v-btn variant="text" color="primary" class="mb-2 mr-2" @click="refresh" :loading="loading" prepend-icon="mdi-refresh">
+            刷新
+          </v-btn>
+          <v-chip color="primary" variant="flat" size="small" class="mb-2 mr-2">
+            总数 {{ total || filteredItems.length }}
+          </v-chip>
+          <v-chip color="secondary" variant="flat" size="small" class="mb-2">
+            已发布 {{ publishedCount }}
+          </v-chip>
+        </v-col>
+      </v-row>
+    </v-card>
+
+    <v-card class="glass-card">
       <v-card-text>
         <v-alert v-if="error" type="error" variant="tonal" class="mb-4">{{ error }}</v-alert>
 
@@ -18,6 +46,7 @@
               clearable
               prepend-inner-icon="mdi-magnify"
               hide-details
+              density="comfortable"
             />
           </v-col>
           <v-col cols="6" md="2">
@@ -69,7 +98,7 @@
           v-model:items-per-page="itemsPerPage"
           v-model:sort-by="sortBy"
           item-key="id"
-          class="elevation-1"
+          class="elevation-0"
           density="comfortable"
         >
           <template #item.cover="{ item }">
@@ -80,7 +109,7 @@
           <template #item.title="{ item }">
             <div class="d-flex flex-column">
               <div class="text-body-2 font-weight-medium">{{ item.title }}</div>
-              <div class="text-caption text-medium-emphasis">{{ item.slug || '-' }}</div>
+              <div class="text-caption text-brand-muted">{{ item.slug || '-' }}</div>
             </div>
           </template>
 
@@ -106,14 +135,6 @@
             </v-chip>
           </template>
 
-          <template #item.views="{ item }">
-            <span>{{ item.views ?? 0 }}</span>
-          </template>
-
-          <template #item.likes="{ item }">
-            <span>{{ item.likes ?? 0 }}</span>
-          </template>
-
           <template #item.publishedAt="{ item }">
             <span>{{ formatDate(item.publishedAt || item.createdAt) }}</span>
           </template>
@@ -134,117 +155,111 @@
             <div class="text-medium-emphasis pa-6">暂无数据</div>
           </template>
         </v-data-table>
-
-        <!-- 详情弹窗 -->
-        <v-dialog v-model="detailDialog" max-width="1000">
-          <v-card>
-            <v-toolbar flat density="comfortable">
-              <v-toolbar-title>{{ detailData?.title || '文章详情' }}</v-toolbar-title>
-              <v-spacer />
-              <v-btn v-if="userRole==='admin'" variant="text" color="primary" @click="openEditFromDetail">
-                <v-icon icon="mdi-pencil" start />编辑内容
-              </v-btn>
-              <v-btn icon @click="detailDialog = false"><v-icon icon="mdi-close" /></v-btn>
-            </v-toolbar>
-            <v-divider />
-
-            <v-progress-linear v-if="detailLoading" indeterminate color="primary" />
-
-            <v-card-text v-if="!detailLoading" class="detail-body">
-              <v-alert v-if="detailError" type="error" variant="tonal" class="mb-4">{{ detailError }}</v-alert>
-
-              <div v-if="detailData">
-                <div class="d-flex flex-wrap align-center mb-3" style="gap:8px">
-                  <v-chip
-                    size="small"
-                    :color="detailData.status === 'published' ? 'success' : (detailData.status === 'draft' ? 'grey' : 'warning')"
-                    variant="elevated"
-                  >
-                    {{ detailData.status }}
-                  </v-chip>
-                  <v-chip v-if="detailData.newsCategory" size="small" color="primary" variant="tonal">
-                    {{ detailData.newsCategory.name }}
-                  </v-chip>
-                  <div class="d-flex flex-wrap" style="gap:6px">
-                    <v-chip v-for="t in detailData.TagOfNews || []" :key="t.id" size="x-small" color="secondary" variant="tonal">{{ t.name }}</v-chip>
-                  </div>
-                  <div class="text-caption text-medium-emphasis ms-auto">
-                    {{ formatDate(detailData.publishedAt || detailData.createdAt) }}
-                  </div>
-                </div>
-
-                <v-img v-if="detailData.coverImage" :src="detailData.coverImage" class="mb-4 rounded" height="220" cover />
-
-                <!-- 富文本内容（HTML） -->
-                <div class="article-content" v-html="detailData.content"></div>
-              </div>
-            </v-card-text>
-          </v-card>
-        </v-dialog>
-
-        <!-- 编辑内容弹窗（仅正文） -->
-        <v-dialog v-model="editDialog" max-width="1000">
-          <v-card>
-            <v-toolbar flat density="comfortable">
-              <v-toolbar-title>编辑内容</v-toolbar-title>
-              <v-spacer />
-              <v-btn icon @click="editDialog = false"><v-icon icon="mdi-close" /></v-btn>
-            </v-toolbar>
-            <v-divider />
-            <v-card-text>
-              <v-alert v-if="editError" type="error" variant="tonal" class="mb-4">{{ editError }}</v-alert>
-              <div v-if="editLoading" class="py-8">
-                <v-progress-linear indeterminate color="primary" />
-              </div>
-              <div v-else>
-                <v-row class="mb-4">
-                  <v-col cols="12" sm="4">
-                    <v-select
-                      v-model="editingStatus"
-                      :items="statusOptions"
-                      item-title="label"
-                      item-value="value"
-                      label="状态"
-                      density="comfortable"
-                      :disabled="editingOriginalStatus === 'archived'"
-                    />
-                  </v-col>
-                </v-row>
-                <WangEditor v-model="editContent" />
-              </div>
-            </v-card-text>
-            <v-divider />
-            <v-card-actions>
-              <v-spacer />
-              <v-btn variant="text" @click="editDialog = false">取消</v-btn>
-              <v-btn color="primary" :loading="savingContent" @click="saveContent">保存</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <!-- 删除确认弹窗 -->
-        <v-dialog v-model="showDeleteDialog" max-width="400px">
-          <v-card>
-            <v-card-title class="text-h6 font-weight-bold">确认删除</v-card-title>
-            <v-card-text>
-              <span>确定要删除 <strong>{{ itemToDelete?.title }}</strong> 吗？此操作不可撤销。</span>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer></v-spacer>
-              <v-btn text @click="showDeleteDialog = false" :disabled="deleteLoading">取消</v-btn>
-              <v-btn color="error" @click="handleDelete" :loading="deleteLoading" :disabled="deleteLoading">删除</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-
-        <!-- 提示 -->
-        <v-snackbar v-model="snackbar.show" :color="snackbar.color" timeout="2000">
-          {{ snackbar.text }}
-        </v-snackbar>
       </v-card-text>
     </v-card>
+
+    <!-- 详情弹窗 -->
+    <v-dialog v-model="detailDialog" max-width="1000">
+      <v-card class="glass-card">
+        <v-toolbar flat density="comfortable">
+          <v-toolbar-title>{{ detailData?.title || '文章详情' }}</v-toolbar-title>
+          <v-spacer />
+          <v-btn v-if="userRole==='admin'" variant="text" color="primary" @click="openEditFromDetail">
+            <v-icon icon="mdi-pencil" start />编辑内容
+          </v-btn>
+          <v-btn icon @click="detailDialog = false"><v-icon icon="mdi-close" /></v-btn>
+        </v-toolbar>
+        <v-divider />
+
+        <v-progress-linear v-if="detailLoading" indeterminate color="primary" />
+
+        <v-card-text v-if="!detailLoading" class="detail-body">
+          <v-alert v-if="detailError" type="error" variant="tonal" class="mb-4">{{ detailError }}</v-alert>
+
+          <div v-if="detailData">
+            <div class="d-flex flex-wrap align-center mb-3" style="gap:8px">
+              <v-chip
+                size="small"
+                :color="detailData.status === 'published' ? 'success' : (detailData.status === 'draft' ? 'grey' : 'warning')"
+                variant="elevated"
+              >
+                {{ detailData.status }}
+              </v-chip>
+              <v-chip v-if="detailData.newsCategory" size="small" color="primary" variant="tonal">
+                {{ detailData.newsCategory.name }}
+              </v-chip>
+              <div class="d-flex flex-wrap" style="gap:6px">
+                <v-chip v-for="t in detailData.TagOfNews || []" :key="t.id" size="x-small" color="secondary" variant="tonal">{{ t.name }}</v-chip>
+              </div>
+              <div class="text-caption text-brand-muted ms-auto">
+                {{ formatDate(detailData.publishedAt || detailData.createdAt) }}
+              </div>
+            </div>
+
+            <v-img v-if="detailData.coverImage" :src="detailData.coverImage" class="mb-4 rounded" height="220" cover />
+
+            <!-- 富文本内容（HTML） -->
+            <div class="article-content glass-card" v-html="detailData.content"></div>
+          </div>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
+    <!-- 编辑内容弹窗（仅正文） -->
+    <v-dialog v-model="editDialog" max-width="1000">
+      <v-card class="glass-card">
+        <v-toolbar flat density="comfortable">
+          <v-toolbar-title>编辑内容</v-toolbar-title>
+          <v-spacer />
+          <v-btn icon @click="editDialog = false"><v-icon icon="mdi-close" /></v-btn>
+        </v-toolbar>
+        <v-divider />
+        <v-card-text>
+          <v-alert v-if="editError" type="error" variant="tonal" class="mb-4">{{ editError }}</v-alert>
+          <div v-if="editLoading" class="py-8">
+            <v-progress-linear indeterminate color="primary" />
+          </div>
+          <div v-else>
+            <v-row class="mb-4">
+              <v-col cols="12" sm="4">
+                <v-select
+                  v-model="editingStatus"
+                  :items="statusOptions"
+                  item-title="label"
+                  item-value="value"
+                  label="状态"
+                  density="comfortable"
+                  :disabled="editingOriginalStatus === 'archived'"
+                />
+              </v-col>
+            </v-row>
+            <WangEditor v-model="editContent" />
+          </div>
+        </v-card-text>
+        <v-divider />
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="editDialog = false">取消</v-btn>
+          <v-btn color="primary" :loading="savingContent" @click="saveContent">保存</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- 删除确认弹窗 -->
+    <v-dialog v-model="showDeleteDialog" max-width="400px">
+      <v-card class="glass-card">
+        <v-card-title class="text-h6 font-weight-bold">确认删除</v-card-title>
+        <v-card-text>
+          <span>确定要删除 <strong>{{ itemToDelete?.title }}</strong> 吗？此操作不可撤销。</span>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer></v-spacer>
+          <v-btn text @click="showDeleteDialog = false" :disabled="deleteLoading">取消</v-btn>
+          <v-btn color="error" @click="handleDelete" :loading="deleteLoading" :disabled="deleteLoading">删除</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </div>
-  
 </template>
 
 <script setup>
@@ -303,6 +318,7 @@ const tagFilter = ref(null)
 const keyword = ref('')
 const categories = ref([])
 const tags = ref([])
+const publishedCount = computed(() => filteredItems.value.filter(it => it.status === 'published').length)
 
 const headers = [
   { title: '封面', key: 'cover', sortable: false, width: 100 },
@@ -593,6 +609,15 @@ onMounted(async () => {
 .news-list-page {
   padding: 8px;
 }
+
+.hero-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(120deg, #5ba6a6, #2d3a8c);
+  box-shadow: 0 0 12px rgba(45, 58, 140, 0.35);
+}
+
 .tags-cell {
   display: flex;
   flex-wrap: wrap;

@@ -1,5 +1,5 @@
 <script setup>
-import {ref, computed, reactive, onMounted, watch} from 'vue'
+import {ref, reactive, onMounted, watch, computed} from 'vue'
 import {useRouter} from 'vue-router'
 import {useUserStore} from '@/stores/auth'
 import {useTheme} from 'vuetify'
@@ -12,8 +12,10 @@ const currentYear = new Date().getFullYear()
 const theme = useTheme()
 
 // Theme names (must match those defined in src/main.js)
-const THEME_LIGHT = 'softPastelLight'
-const THEME_DARK = 'softPastelDark'
+const THEME_LIGHT = 'brandLight'
+const THEME_DARK = 'brandDark'
+const LEGACY_LIGHT = 'softPastelLight'
+const LEGACY_DARK = 'softPastelDark'
 
 // Track current theme
 const isDarkTheme = ref(false)
@@ -21,20 +23,24 @@ const isDarkTheme = ref(false)
 // Initialize theme based on user preference or system setting
 onMounted(() => {
   const savedTheme = localStorage.getItem('selectedTheme')
-  if (savedTheme === THEME_LIGHT || savedTheme === THEME_DARK) {
-    theme.global.name.value = savedTheme
-    isDarkTheme.value = savedTheme === THEME_DARK
+  // Handle legacy theme names if they were stored before palette update
+  const normalizedTheme = savedTheme === LEGACY_LIGHT
+    ? THEME_LIGHT
+    : savedTheme === LEGACY_DARK
+      ? THEME_DARK
+      : savedTheme
+
+  if (normalizedTheme === THEME_LIGHT || normalizedTheme === THEME_DARK) {
+    theme.global.name.value = normalizedTheme
+    isDarkTheme.value = normalizedTheme === THEME_DARK
   } else {
     // Check if user prefers dark mode
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    if (prefersDark) {
-      theme.global.name.value = THEME_DARK
-      isDarkTheme.value = true
-    } else {
-      theme.global.name.value = THEME_LIGHT
-      isDarkTheme.value = false
-    }
+    const initialTheme = prefersDark ? THEME_DARK : THEME_LIGHT
+    theme.global.name.value = initialTheme
+    isDarkTheme.value = prefersDark
   }
+  document.documentElement.setAttribute('data-theme', theme.global.name.value)
 })
 
 // Toggle between light and dark themes
@@ -43,10 +49,13 @@ const toggleTheme = () => {
   const newTheme = isDarkTheme.value ? THEME_DARK : THEME_LIGHT
   theme.global.name.value = newTheme
   localStorage.setItem('selectedTheme', newTheme)
+  document.documentElement.setAttribute('data-theme', newTheme)
 }
 
-// Get current theme's background color
-const backgroundColor = computed(() => theme.current.value.colors.background)
+watch(
+  () => theme.global.name.value,
+  (val) => document.documentElement.setAttribute('data-theme', val)
+)
 
 // ===== 用户 & 角色 =====
 const parseUser = (val) => {
@@ -157,9 +166,10 @@ const profileItems = [
   <v-app>
     <!-- App Bar / Header -->
     <v-app-bar
-        color="primary"
+        color="transparent"
         density="compact"
-        elevation="2"
+        elevation="0"
+        class="glass-app-bar"
     >
       <v-app-bar-nav-icon @click="toggleDrawer"></v-app-bar-nav-icon>
 
@@ -232,6 +242,7 @@ const profileItems = [
         v-model="drawer"
         :rail="rail"
         permanent
+        class="glass-card"
         @click="rail = false"
     >
       <v-list-item :title="userData.name || '用户'" :subtitle="roleDisplay">
@@ -311,6 +322,8 @@ const profileItems = [
           <v-btn
               block
               color="primary"
+              variant="tonal"
+              class="glass-card"
               to="/help"
           >
             <v-icon start>mdi-help-circle</v-icon>
@@ -321,8 +334,8 @@ const profileItems = [
     </v-navigation-drawer>
 
     <!-- Main Content Area -->
-    <v-main>
-      <div class="main-content" :style="{ backgroundColor: backgroundColor }">
+    <v-main class="glass-bg">
+      <div class="main-content">
         <v-container fluid>
           <router-view/>
         </v-container>
@@ -330,8 +343,8 @@ const profileItems = [
     </v-main>
 
     <!-- Footer -->
-    <v-footer app color="primary" class="text-center d-flex justify-center px-4">
-      <span class="text-caption white--text">
+    <v-footer app color="transparent" elevation="0" class="text-center d-flex justify-center px-4 glass-app-bar">
+      <span class="text-caption">
         &copy; {{ currentYear }} 管理系统 - 版权所有
       </span>
     </v-footer>

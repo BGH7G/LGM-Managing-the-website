@@ -11,8 +11,42 @@
   >
     {{ alert.message }}
   </v-alert>
-  <v-container fluid>
-    <v-row>
+  <v-container fluid class="photo-page pa-4">
+    <v-row class="mb-4" align="center">
+      <v-col cols="12">
+        <v-card class="glass-card pa-4">
+          <v-row align="center" no-gutters>
+            <v-col cols="12" md="6">
+              <div class="d-flex align-center">
+                <div class="hero-dot mr-3"></div>
+                <div>
+                  <div class="text-overline text-brand-muted">相册中心</div>
+                  <div class="text-h5 font-weight-bold">组内照片管理与展示</div>
+                  <div class="text-body-2 text-brand-muted mt-1">
+                    管理、分类和浏览所有相册
+                  </div>
+                </div>
+              </div>
+            </v-col>
+            <v-col cols="12" md="6" class="d-flex justify-end align-center flex-wrap">
+              <div class="d-flex align-center mr-4 mb-2">
+                <v-chip color="primary" variant="flat" class="mr-2" size="small">
+                  相册 {{ stats.totalAlbums }}
+                </v-chip>
+                <v-chip color="secondary" variant="flat" size="small">
+                  照片 {{ stats.totalPhotos }}
+                </v-chip>
+              </div>
+              <v-btn color="primary" prepend-icon="mdi-plus" class="glass-card" @click="addDialog = true">
+                新建相册
+              </v-btn>
+            </v-col>
+          </v-row>
+        </v-card>
+      </v-col>
+    </v-row>
+
+    <v-row dense>
       <v-col
         v-for="album in albums"
         :key="album.id"
@@ -20,44 +54,71 @@
         sm="6"
         md="4"
         lg="3"
+        xl="3"
       >
-        <v-card class="album-card" hover>
-          <!-- 操作菜单 -->
-          <v-menu location="bottom end">
-            <template v-slot:activator="{ props }">
-              <v-btn color="accent" icon="mdi-dots-vertical" variant="text" class="menu-btn" @click.stop v-bind="props"></v-btn>
-            </template>
-            <v-list>
-              <v-list-item @click="openEdit(album)">
-                <v-list-item-title>编辑</v-list-item-title>
-              </v-list-item>
-              <v-list-item @click="openDeleteDialog(album)" class="text-error">
-                <v-list-item-title>删除</v-list-item-title>
-              </v-list-item>
-            </v-list>
-          </v-menu>
-          <div @click="openAlbum(album.id)" style="cursor:pointer">
-            <v-img :src="getCover(album.cover)" height="200px" class="white--text align-end" cover>
-              <v-chip color="accent" class="ma-2" variant="elevated" rounded="xl">{{ album.imageCount }} 图</v-chip>
-            </v-img>
-            <v-card-title class="text-h6">{{ album.name }}</v-card-title>
-            <v-card-subtitle>{{ formatDate(album.createdAt) }}</v-card-subtitle>
-            <v-card-text class="truncate-two-line">{{ album.description }}</v-card-text>
-          </div>
-        </v-card>
+        <v-hover v-slot="{ props, isHovering }">
+          <v-card class="album-card glass-card" v-bind="props">
+            <!-- 操作菜单 -->
+            <v-menu location="bottom end">
+              <template v-slot:activator="{ props: menuProps }">
+                <v-btn color="primary" icon="mdi-dots-vertical" variant="text" class="menu-btn" @click.stop v-bind="menuProps"></v-btn>
+              </template>
+              <v-list>
+                <v-list-item @click="openEdit(album)">
+                  <v-list-item-title>编辑</v-list-item-title>
+                </v-list-item>
+                <v-list-item @click="openDeleteDialog(album)" class="text-error">
+                  <v-list-item-title>删除</v-list-item-title>
+                </v-list-item>
+              </v-list>
+            </v-menu>
+
+            <div @click="openAlbum(album.id)" class="album-cover-wrapper">
+              <v-img :src="getCover(album.cover)" height="200" class="album-cover" cover>
+                <div class="cover-gradient"></div>
+                <div class="cover-meta d-flex align-center justify-space-between">
+                  <v-chip color="secondary" size="small" variant="flat" class="text-caption">
+                    {{ album.imageCount || 0 }} 张
+                  </v-chip>
+                  <span class="text-caption">{{ formatDate(album.createdAt) }}</span>
+                </div>
+              </v-img>
+            </div>
+
+            <v-card-text>
+              <div class="d-flex align-center justify-space-between mb-1">
+                <div class="text-subtitle-1 font-weight-bold">{{ album.name }}</div>
+                <v-chip size="x-small" color="primary" variant="tonal" class="text-uppercase">
+                  Album
+                </v-chip>
+              </div>
+              <div class="truncate-two-line text-body-2 text-brand-muted">
+                {{ album.description || '暂无描述' }}
+              </div>
+            </v-card-text>
+
+            <v-expand-transition>
+              <div v-if="isHovering" class="album-actions d-flex justify-end pa-3 pt-0">
+                <v-btn size="small" variant="tonal" color="primary" @click.stop="openEdit(album)">编辑</v-btn>
+                <v-btn size="small" variant="text" color="error" class="ml-2" @click.stop="openDeleteDialog(album)">删除</v-btn>
+              </div>
+            </v-expand-transition>
+          </v-card>
+        </v-hover>
       </v-col>
+
       <!-- 添加新相册按钮 -->
-      <v-col
-        cols="12"
-        sm="6"
-        md="4"
-        lg="3"
-      >
-        <v-card class="add-album-card" style="height: 100%;" outlined hover @click="addDialog = true">
+      <v-col cols="12" sm="6" md="4" lg="3" xl="3">
+        <v-card class="add-album-card glass-card" style="height: 100%;" outlined hover @click="addDialog = true">
           <v-row class="fill-height" align="center" justify="center">
-            <v-icon size="64">mdi-plus</v-icon>
+            <div class="text-center">
+              <v-btn icon color="primary" variant="tonal" size="x-large">
+                <v-icon size="36">mdi-plus</v-icon>
+              </v-btn>
+              <div class="text-subtitle-1 font-weight-medium mt-3">新建相册</div>
+              <div class="text-body-2 text-brand-muted">上传封面与描述，快速创建</div>
+            </div>
           </v-row>
-          <v-card-title class="text-h6 text-center">新建相册</v-card-title>
         </v-card>
       </v-col>
     </v-row>
@@ -72,11 +133,16 @@
     </v-row>
 
     <!-- 新建相册对话框 -->
-    <v-dialog v-model="addDialog" max-width="700px" transition="dialog-bottom-transition">
-      <v-card elevation="24" class="pa-4">
-        <!-- Header -->
-        <div class="dialog-header d-flex align-center justify-center mb-6">
-          <span class="text-h5 font-weight-medium white--text">{{ isEditing ? '修改相册' : '创建相册' }}</span>
+    <v-dialog v-model="addDialog" max-width="780px" transition="dialog-bottom-transition">
+      <v-card elevation="18" class="pa-5 glass-card">
+        <div class="dialog-header d-flex align-center justify-space-between mb-4">
+          <div>
+            <div class="text-overline text-brand-muted">{{ isEditing ? '编辑相册' : '新建相册' }}</div>
+            <div class="text-h5 font-weight-bold">{{ isEditing ? '更新封面与描述' : '创建新的相册' }}</div>
+          </div>
+          <v-avatar color="primary" variant="tonal" size="36">
+            <v-icon>mdi-folder-image</v-icon>
+          </v-avatar>
         </div>
 
         <v-form ref="addFormRef">
@@ -176,6 +242,11 @@ const pagination = ref({
 });
 const loading = ref(false);
 const router = useRouter();
+const stats = computed(() => {
+  const totalAlbums = albums.value.length;
+  const totalPhotos = albums.value.reduce((sum, a) => sum + (a.imageCount || 0), 0);
+  return { totalAlbums, totalPhotos };
+});
 
 // 新建相册对话框相关
 const addDialog = ref(false);
@@ -425,36 +496,93 @@ async function submitAlbum() {
 </script>
 
 <style lang="scss" scoped>
+.photo-page {
+  min-height: calc(100vh - 120px);
+}
+
+.hero-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(120deg, #5ba6a6, #2d3a8c);
+  box-shadow: 0 0 10px rgba(45, 58, 140, 0.35);
+}
+
 .album-card {
   cursor: pointer;
-  .truncate-two-line {
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-  .menu-btn {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    z-index: 10;
-  }
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+
+.album-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
+}
+
+.album-cover-wrapper {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px 14px 0 0;
+}
+
+.album-cover {
+  border-radius: 14px 14px 0 0;
+}
+
+.cover-gradient {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 30%, rgba(0, 0, 0, 0.35) 100%);
+}
+
+.cover-meta {
+  position: absolute;
+  bottom: 10px;
+  left: 12px;
+  right: 12px;
+  color: white;
+  z-index: 2;
+}
+
+.album-actions {
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.truncate-two-line {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.menu-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 10;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(6px);
 }
 
 .add-album-card {
   cursor: pointer;
-  min-height: 200px;
+  min-height: 240px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   color: var(--v-theme-on-surface);
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.add-album-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
 }
 
 .dialog-header {
-  // background: linear-gradient(45deg, #bee0f9, #d6e9f9);
-  padding: 16px;
-  border-radius: 8px;
+  padding: 12px 0;
 }
 
 .preview-img {
@@ -465,7 +593,7 @@ async function submitAlbum() {
   cursor: pointer;
   transition: opacity 0.2s;
   &:hover {
-    opacity: 0.8;
+    opacity: 0.85;
   }
 }
 </style>
