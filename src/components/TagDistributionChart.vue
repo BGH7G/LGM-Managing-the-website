@@ -1,7 +1,7 @@
 <template>
   <v-card class="glass-card">
     <v-card-title class="d-flex align-center">
-      <span class="text-h5 font-weight-bold">耗材标签分布</span>
+      <span class="text-h5 font-weight-bold">耗材统计</span>
       <v-spacer></v-spacer>
       <v-btn
         icon="mdi-refresh"
@@ -55,53 +55,55 @@ const renderChart = (entries) => {
     return
   }
 
-  const primary = getThemeColor('primary', '#2D3A8C')
-  const accent = getThemeColor('secondary', '#5BA6A6')
   const axis = getThemeColor('muted', '#475467')
-  const border = getThemeColor('border', '#E5E7EB')
 
-  const names = entries.map(([name]) => name)
-  const values = entries.map(([, count]) => count)
+  // 将数据转换为 ECharts 所需的格式
+  const chartData = entries.map(([name, count]) => ({
+    value: count,
+    name: name
+  }))
 
   const option = {
-    color: [primary],
     tooltip: {
-      trigger: 'axis',
-      axisPointer: {type: 'shadow'}
+      trigger: 'item',
+      formatter: '{b}: {c} ({d}%)'
     },
-    grid: {
-      left: '3%',
-      right: '4%',
-      bottom: '3%',
-      top: '8%',
-      containLabel: true
+    legend: {
+      top: 'bottom',
+      textStyle: {
+        color: axis
+      }
     },
-    xAxis: {
-      type: 'value',
-      axisLine: {lineStyle: {color: axis}},
-      splitLine: {lineStyle: {color: border}},
-      axisLabel: {color: axis}
-    },
-    yAxis: {
-      type: 'category',
-      data: names,
-      axisTick: {show: false},
-      axisLine: {lineStyle: {color: axis}},
-      axisLabel: {color: axis}
+    toolbox: {
+      show: true,
+      feature: {
+        saveAsImage: {
+          show: true,
+          title: '保存为图片'
+        }
+      }
     },
     series: [
       {
-        name: '数量',
-        type: 'bar',
-        data: values,
-        barWidth: '60%',
+        name: '标签分布',
+        type: 'pie',
+        radius: [50, 180],
+        center: ['50%', '50%'],
+        roseType: 'area',
         itemStyle: {
-          color: primary,
-          borderRadius: [6, 6, 6, 6]
+          borderRadius: 8
+        },
+        label: {
+          color: axis
         },
         emphasis: {
-          itemStyle: {color: accent}
-        }
+          label: {
+            show: true,
+            fontSize: 16,
+            fontWeight: 'bold'
+          }
+        },
+        data: chartData
       }
     ]
   }

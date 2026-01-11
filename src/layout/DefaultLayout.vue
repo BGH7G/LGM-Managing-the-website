@@ -83,22 +83,22 @@ const baseNav = [
     title: '数据',
     icon: 'mdi-chart-bar',
     children: [
-      {title: '数据库', path: '/dataSheet'},
-      {
-        title: '湖羊数据',
-        children: [
-          {title: '个体信息', path: '/dataShow/huSheep/huSheepIndividual'},
-          {title: '表型信息', path: '/dataShow/huSheep/huSheepPhenotype'},
-        ]
-      },
-      {
-        title: '荷斯坦奶牛数据',
-        children: [
-          {title: '个体信息', path: '/dataShow/holstein/holsteinIndividual'},
-          {title: '表型信息', path: '/dataShow/holstein/holsteinPhenotype'},
-        ]
-      },
-      {title: '厂址', path: '/dataShow/location'}
+      {title: '数据库', path: '/dataSheet'}
+      // {
+      //   title: '湖羊数据',
+      //   children: [
+      //     {title: '个体信息', path: '/dataShow/huSheep/huSheepIndividual'},
+      //     {title: '表型信息', path: '/dataShow/huSheep/huSheepPhenotype'},
+      //   ]
+      // },
+      // {
+      //   title: '荷斯坦奶牛数据',
+      //   children: [
+      //     {title: '个体信息', path: '/dataShow/holstein/holsteinIndividual'},
+      //     {title: '表型信息', path: '/dataShow/holstein/holsteinPhenotype'},
+      //   ]
+      // },
+      // {title: '厂址', path: '/dataShow/location'}
     ]
   },
   {
